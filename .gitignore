@@ -5,9 +5,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# Raw dataset (>90 MB; download events.csv from Kaggle into data/raw/)
-data/raw/*.csv
-data/processed/*.csv
+# Large raw datasets (>90 MB; keep category_tree.csv and processed clean.csv/customer_profiles.csv tracked for cloud deploy!)
+data/raw/events.csv
+data/raw/item_properties_part1.csv
+data/raw/item_properties_part2.csv
 data/predictions.db
 
 # OS & temporary zip

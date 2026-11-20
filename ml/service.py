@@ -200,11 +200,22 @@ def get_insights() -> dict:
 
 
 # =============================================================================
-# 5. PERSISTENT SQLITE PREDICTION HISTORY (data/predictions.db)
+# 5. PERSISTENT SQLITE PREDICTION HISTORY (data/predictions.db or /tmp fallback)
 # =============================================================================
+def _db_path():
+    p = config.PREDICTIONS_DB_PATH
+    try:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(p) as conn:
+            conn.execute("SELECT 1")
+        return p
+    except Exception:
+        from pathlib import Path
+        return Path("/tmp/predictions.db")
+
+
 def _init_db() -> None:
-    config.PREDICTIONS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(config.PREDICTIONS_DB_PATH) as conn:
+    with sqlite3.connect(_db_path()) as conn:
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS predictions (
@@ -226,7 +237,7 @@ def log_prediction(features: dict, result: dict) -> dict:
     created_at = datetime.now().isoformat(timespec="seconds")
     probs = result.get("probabilities") or {}
     prob_pos = result.get("probability", probs.get(config.POSITIVE_CLASS))
-    with sqlite3.connect(config.PREDICTIONS_DB_PATH) as conn:
+    with sqlite3.connect(_db_path()) as conn:
         cur = conn.execute(
             """
             INSERT INTO predictions (created_at, prediction, probability, intent_tier, input_json, probabilities_json)
@@ -256,7 +267,7 @@ def log_prediction(features: dict, result: dict) -> dict:
 def get_predictions(limit: int = 50) -> list[dict]:
     """Read the most recent prediction records from SQLite."""
     _init_db()
-    with sqlite3.connect(config.PREDICTIONS_DB_PATH) as conn:
+    with sqlite3.connect(_db_path()) as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
             "SELECT * FROM predictions ORDER BY id DESC LIMIT ?", (int(limit),)
@@ -278,6 +289,6 @@ def get_predictions(limit: int = 50) -> list[dict]:
 def clear_predictions() -> int:
     """Delete all saved prediction history records from SQLite."""
     _init_db()
-    with sqlite3.connect(config.PREDICTIONS_DB_PATH) as conn:
+    with sqlite3.connect(_db_path()) as conn:
         cur = conn.execute("DELETE FROM predictions")
         return cur.rowcount

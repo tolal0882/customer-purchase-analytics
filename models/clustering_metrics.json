@@ -1,5 +1,5 @@
 {
-  "trained_at": "2026-11-20T23:35:48",
+  "trained_at": "2026-11-20T23:43:50",
   "algorithm": "K-Means",
   "n_clusters": 4,
   "n_customers": 25000,

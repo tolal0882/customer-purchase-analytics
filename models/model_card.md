@@ -1,6 +1,6 @@
 # Model Card – E-commerce Purchase Behavior Prediction
 
-- **Trained:** 2026-11-20T23:20:22
+- **Trained:** 2026-11-20T23:43:50
 - **Task:** classification – predict `will_purchase` (`Yes` / `No`)
 - **Best Model:** Logistic Regression
 - **Best Parameters:** {'C': 3.0}
