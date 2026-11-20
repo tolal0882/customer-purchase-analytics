@@ -5,86 +5,136 @@ colorFrom: green
 colorTo: gray
 sdk: streamlit
 sdk_version: 1.44.0
-app_file: streamlit_app.py
+app_file: frontend/app.py
 pinned: false
 ---
 
 # E-commerce Purchase Behavior Prediction and Customer Segmentation Using Machine Learning
 
-An interactive Data Science application built with **Streamlit** and **React + TypeScript + Tailwind CSS** for analyzing the **Retailrocket E-commerce Dataset** using the **CRISP-DM** methodology.
+*An Interactive Data Science Application Using Streamlit, FastAPI, and React*
 
-## Key Capabilities
+Built by adapting our teacher's **CRISP-DM Data Science Web App Template**:
+**raw data (`events.csv`) ➜ cleaning (`make_dataset.py`) ➜ EDA & notebooks (`01..04`) ➜ supervised + unsupervised modelling (`train.py` & `clustering.py`) ➜ evaluation (`evaluate.py`) ➜ FastAPI (`backend_fastapi/`) ➜ 8-page Streamlit + React web app (`frontend/`).**
 
-- **10 Complete Application Pages:** Dashboard, Dataset Explorer, Data Preprocessing, Exploratory Data Analysis (6 analytical sections), Customer & Session Segmentation, Model Training, Model Evaluation, Purchase Prediction, Prediction History, and About Project.
-- **Hybrid Frontend:** Streamlit is the primary framework, integrated with custom React + TypeScript + Tailwind CSS components (`PredictionForm`, `ClusterExplorer`, `ModelCompare`) built with Vite and served via `streamlit.components.v1.declare_component`.
-- **Leakage-Safe Machine Learning:**
-  - Early-session prediction snapshots (default: after the 3rd non-transaction event; configurable time-based alternative).
-  - Chronological train/test split and expanding-window `TimeSeriesSplit` cross-validation.
-  - All preprocessing (`SimpleImputer`, `StandardScaler`) and optional training-fold resampling wrapped inside a single Scikit-learn pipeline (`ResamplingClassifier`).
-  - Explicit guards blocking `visitorid`, `itemid`, `transactionid`, and `transaction_count` from model inputs.
-- **Behavioural Segmentation:** K-Means clustering for both customers (visitors) and sessions, with Elbow Method, Silhouette analysis, 2-D PCA visualization, z-score-derived cluster names, and post-clustering purchase-rate comparison.
+```text
+┌────────────────────┐   HTTP / JSON   ┌──────────────────────┐   Python calls   ┌─────────────────────────┐
+│ Streamlit + React  │ ──────────────▶ │   FastAPI Backend    │ ───────────────▶ │   ml/ Pipeline Layer    │
+│ frontend/app.py    │ ◀────────────── │ backend_fastapi/     │ ◀─────────────── │ models/model.joblib     │
+│ (8 views)          │                 │ + SQLite history     │                  │ models/clustering.joblib│
+└────────────────────┘                 └──────────────────────┘                  └─────────────────────────┘
+```
 
-## Project Structure
+---
+
+## 1. The Data-Science Workflow (CRISP-DM)
+
+| # | Phase | Where | Output |
+|---|---|---|---|
+| 1 | Business understanding | `reports/final_report_template.md`, `frontend/views/about.py` | Problem, objectives, success criteria |
+| 2 | Data understanding | `notebooks/01_eda.ipynb` | Data quality audit, funnel & target distribution |
+| 3 | Data preparation | `notebooks/02_data_cleaning.ipynb` ➜ `ml/data/make_dataset.py`, `ml/features.py` | `data/processed/clean.csv`, `customer_profiles.csv` |
+| 4 | Modelling | `notebooks/03_modeling.ipynb` ➜ `ml/train.py`, `ml/clustering.py` | 4 classifiers (5-fold CV + tuned) & K-Means ($K=2\dots8$) |
+| 5 | Evaluation | `notebooks/04_evaluation.ipynb` ➜ `ml/evaluate.py` | `models/metrics.json`, `model_card.md`, `reports/figures/*.png` |
+| 6 | Deployment | `backend_fastapi/main.py`, `frontend/app.py` (8 pages) | Working full-stack web application |
+
+---
+
+## 2. Project Structure (Teacher's Template Architecture)
 
 ```text
 customer-purchase-analytics/
-├── streamlit_app.py              # Main Streamlit entry point
-├── requirements.txt
-├── pytest.ini
-├── config/settings.py            # Paths, defaults, design system tokens
-├── app_pages/                    # 10 Streamlit pages
-├── src/                          # Pure Python data, ML, analytics & chart modules
-├── components/
-│   ├── streamlit_components/     # Reusable Streamlit UI + React component wrappers
-│   └── react/                    # Vite + React + TypeScript + Tailwind CSS components
 ├── data/
-│   ├── raw/ (or row/)            # Original Retailrocket CSVs (never modified)
-│   ├── processed/                # Cached parquet/CSV processed tables
-│   └── history/                  # Local prediction history log (CSV)
-├── models/                       # Saved joblib pipelines & clustering bundles
-├── experiments/                  # Saved experiment metadata (JSON)
-└── tests/                        # Pytest unit, leakage, ML & real-data tests
+│   ├── raw/events.csv                # Original Retailrocket clickstream dataset (2.75M rows, read-only)
+│   ├── processed/                    # clean.csv, customer_profiles.csv, insights_summary.json
+│   ├── predictions.db                # SQLite persistent prediction history
+│   └── README.md                     # Retailrocket data dictionary
+├── notebooks/
+│   ├── 01_eda.ipynb                  # Exploratory Data Analysis
+│   ├── 02_data_cleaning.ipynb        # Duplicate removal, 30-min sessions & snapshot engineering
+│   ├── 03_modeling.ipynb             # 4-classifier CV comparison, tuning & K-Means Elbow/Silhouette
+│   └── 04_evaluation.ipynb           # Held-out test evaluation, ROC/PR curves & cluster profiling
+├── ml/
+│   ├── config.py                     # Paths, target ("will_purchase"), features & hyperparameters
+│   ├── data/make_dataset.py          # Raw events.csv ➜ clean.csv & customer_profiles.csv
+│   ├── features.py                   # In-pipeline FunctionTransformer + ColumnTransformer
+│   ├── train.py                      # 5-fold Stratified CV, RandomizedSearchCV & model card generator
+│   ├── clustering.py                 # K-Means customer segmentation (log1p + StandardScaler + PCA)
+│   ├── evaluate.py                   # Test metrics & report figures
+│   └── service.py                    # Unified service layer called by FastAPI (with SQLite history)
+├── models/                           # model.joblib, clustering.joblib, metrics.json, model_card.md
+├── reports/
+│   ├── figures/                      # model_comparison.png, confusion_matrix.png, roc_curve.png,
+│   │                                 # feature_importance.png, elbow_silhouette.png, clusters_pca.png
+│   └── final_report_template.md      # Populated academic project report
+├── backend_fastapi/                  # FastAPI REST backend (/api/health, /schema, /data, /metrics,
+│                                     # /train, /predict, /predictions, /segments, /insights)
+├── backend_django/                   # Optional Django REST backend from template
+├── frontend/                         # 8-page Streamlit + React application
+│   ├── app.py                        # Main Streamlit entrypoint
+│   ├── config.py                     # Project title, description & team info
+│   ├── api_client.py                 # HTTP client for FastAPI (with automatic direct-service fallback)
+│   ├── components/                   # Compiled React + TypeScript + Tailwind bundle & bridge
+│   └── views/                        # 8 pages: home, data_explorer, prediction, segmentation,
+│                                     # model_performance, history, insights, about
+├── tests/test_pipeline.py            # Pytest suite (cleaning, features, classification, clustering, API)
+└── requirements.txt
 ```
 
-## Dataset Setup
+---
 
-Download the [Retailrocket E-commerce Dataset](https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset) from Kaggle and place `events.csv` into `data/raw/`.
-
-## Installation & Execution
-
-### 1. Python environment
+## 3. Setup & Installation
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+
 pip install -r requirements.txt
+pip install -r backend_fastapi/requirements.txt
+pip install -r frontend/requirements.txt
 ```
 
-### 2. Build React components (optional if `components/react/dist` is already built)
+Place the Retailrocket `events.csv` file from [Kaggle](https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset) into `data/raw/events.csv`.
+
+---
+
+## 4. Run the ML Pipeline (From Project Root)
 
 ```bash
-cd components/react
-npm install
-npm run build
-cd ../..
+python -m ml.data.make_dataset    # clean raw events.csv ➜ data/processed/clean.csv & customer_profiles.csv
+python -m ml.train                # compare 4 classifiers (5-fold CV), tune best, run K-Means (K=4), save all
+pytest                            # run automated test suite
 ```
 
-*(If `components/react/dist` is absent, the app automatically falls back to native Streamlit controls.)*
+Actual output of `python -m ml.train` on Retailrocket:
 
-### 3. Run the application
+```text
+Data: 24,000 train / 6,000 test rows, 9 input columns
 
+1) Comparing models (5-fold CV on training set):
+  Logistic Regression    f1 = 0.4266 ± 0.0087
+  Random Forest          f1 = 0.4227 ± 0.0117
+  Gradient Boosting      f1 = 0.3466 ± 0.0240
+  Decision Tree          f1 = 0.3092 ± 0.0164
+
+2) Tuning best model: Logistic Regression  (best params: {'C': 3.0})
+3) Evaluating on the TEST set:
+   accuracy 0.8650 · precision 0.3118 · recall 0.6462 · f1 0.4206 · roc_auc 0.8165 · pr_auc 0.3758
+4) Running K-Means Customer Segmentation:
+   K-Means (K=4) trained on 25,000 customers · Silhouette = 0.3413
+```
+
+---
+
+## 5. Run the Web Application
+
+**Terminal 1 – FastAPI Backend** (from project root):
 ```bash
-.venv/bin/streamlit run streamlit_app.py
+.venv/bin/uvicorn backend_fastapi.main:app --reload --port 8000
 ```
+*(Interactive Swagger docs: http://localhost:8000/docs)*
 
-### 4. Run tests
-
+**Terminal 2 – Streamlit + React Frontend** (from project root):
 ```bash
-.venv/bin/python -m pytest
+.venv/bin/streamlit run frontend/app.py
 ```
-
-## Methodological Notes & Limitations
-
-- **Session IDs** are not provided by Retailrocket and are engineered via a configurable inactivity timeout (default: 30 minutes).
-- **Cart removals** (`removefromcart`) do not exist in the Retailrocket dataset; `historical_cart_abandonment_rate` is defined as the share of cart sessions without a transaction in the same session.
-- **Imbalanced target:** Only ~7.5% of eligible 3-event prediction snapshots result in a transaction; always evaluate models using PR-AUC, Recall, Precision, and F1 rather than accuracy alone.
+*(App URL: http://localhost:8501 — Note: if FastAPI is not started separately, `frontend/api_client.py` automatically falls back to calling `ml.service` directly so single-command demos work seamlessly!)*

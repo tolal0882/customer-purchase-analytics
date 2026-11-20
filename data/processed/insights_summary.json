@@ -1,0 +1,187 @@
+{
+  "raw_rows": 2756101,
+  "clean_event_rows": 2755641,
+  "duplicates_removed": 460,
+  "invalid_rows_removed": 0,
+  "unique_visitors": 1407580,
+  "unique_items": 235061,
+  "total_sessions": 1761675,
+  "date_min": "2015-05-03",
+  "date_max": "2015-09-18",
+  "event_counts": {
+    "view": 2664218,
+    "addtocart": 68966,
+    "transaction": 22457
+  },
+  "session_funnel": [
+    {
+      "stage": "Sessions with Views",
+      "count": 1755781,
+      "pct": 99.67
+    },
+    {
+      "stage": "Sessions with Add-to-Cart",
+      "count": 43924,
+      "pct": 2.49
+    },
+    {
+      "stage": "Sessions with Purchase",
+      "count": 14297,
+      "pct": 0.81
+    }
+  ],
+  "cart_abandonment_rate_pct": 72.83,
+  "session_conversion_rate_pct": 0.81,
+  "modeling_rows": 30000,
+  "modeling_positive_rate_pct": 7.59,
+  "hourly_events": [
+    {
+      "hour": 0,
+      "events": 144278
+    },
+    {
+      "hour": 1,
+      "events": 140673
+    },
+    {
+      "hour": 2,
+      "events": 145854
+    },
+    {
+      "hour": 3,
+      "events": 150831
+    },
+    {
+      "hour": 4,
+      "events": 147153
+    },
+    {
+      "hour": 5,
+      "events": 119558
+    },
+    {
+      "hour": 6,
+      "events": 76965
+    },
+    {
+      "hour": 7,
+      "events": 43936
+    },
+    {
+      "hour": 8,
+      "events": 25304
+    },
+    {
+      "hour": 9,
+      "events": 17905
+    },
+    {
+      "hour": 10,
+      "events": 16405
+    },
+    {
+      "hour": 11,
+      "events": 20328
+    },
+    {
+      "hour": 12,
+      "events": 31479
+    },
+    {
+      "hour": 13,
+      "events": 51084
+    },
+    {
+      "hour": 14,
+      "events": 81813
+    },
+    {
+      "hour": 15,
+      "events": 129074
+    },
+    {
+      "hour": 16,
+      "events": 161755
+    },
+    {
+      "hour": 17,
+      "events": 179611
+    },
+    {
+      "hour": 18,
+      "events": 181166
+    },
+    {
+      "hour": 19,
+      "events": 183324
+    },
+    {
+      "hour": 20,
+      "events": 187890
+    },
+    {
+      "hour": 21,
+      "events": 184272
+    },
+    {
+      "hour": 22,
+      "events": 175931
+    },
+    {
+      "hour": 23,
+      "events": 159052
+    }
+  ],
+  "weekday_events": [
+    {
+      "day": "Mon",
+      "events": 439738
+    },
+    {
+      "day": "Tue",
+      "events": 447006
+    },
+    {
+      "day": "Wed",
+      "events": 431059
+    },
+    {
+      "day": "Thu",
+      "events": 418672
+    },
+    {
+      "day": "Fri",
+      "events": 379624
+    },
+    {
+      "day": "Sat",
+      "events": 305167
+    },
+    {
+      "day": "Sun",
+      "events": 334375
+    }
+  ],
+  "conversion_by_early_carts": [
+    {
+      "add_to_cart_count": 0,
+      "sessions": 26403,
+      "conversion_rate": 3.99
+    },
+    {
+      "add_to_cart_count": 1,
+      "sessions": 2958,
+      "conversion_rate": 36.17
+    },
+    {
+      "add_to_cart_count": 2,
+      "sessions": 521,
+      "conversion_rate": 24.38
+    },
+    {
+      "add_to_cart_count": 3,
+      "sessions": 118,
+      "conversion_rate": 22.03
+    }
+  ]
+}
