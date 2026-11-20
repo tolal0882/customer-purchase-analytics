@@ -11,7 +11,6 @@ type Values = {
   ends_with_cart: boolean;
   start_hour: number;
   start_dayofweek: number;
-  unique_categories_viewed: number;
   hist_prior_sessions: number;
   hist_prior_purchases: number;
   hist_hours_since_prev_session: number | null;
@@ -122,7 +121,6 @@ export default function PredictionForm({ args }: { args: Args }) {
             </select>
           </label>
         </div>
-        {f.has("unique_categories_viewed") && <Num label="Categories explored" value={v.unique_categories_viewed} min={0} onChange={(n) => set("unique_categories_viewed", n)} />}
         {f.has("hist_prior_sessions") && <Num label="Visitor's earlier sessions" value={v.hist_prior_sessions} min={0} onChange={(n) => set("hist_prior_sessions", n)} />}
         {f.has("hist_prior_purchases") && <Num label="Visitor's earlier purchases" value={v.hist_prior_purchases} min={0} onChange={(n) => set("hist_prior_purchases", n)} />}
         {f.has("hist_hours_since_prev_session") && (
