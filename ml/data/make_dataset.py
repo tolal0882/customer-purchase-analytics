@@ -328,10 +328,34 @@ def build_insights_summary(events: pd.DataFrame, sessions: pd.DataFrame, clean_d
         .to_dict(orient="records")
     )
 
+    # Check additional Retailrocket files in data/raw/ (category_tree.csv, item_properties_part1/2.csv)
+    n_categories = 0
+    n_root_categories = 0
+    if config.CATEGORY_TREE_PATH.exists():
+        ct_df = pd.read_csv(config.CATEGORY_TREE_PATH)
+        n_categories = int(ct_df["categoryid"].nunique())
+        n_root_categories = int(ct_df["parentid"].isna().sum())
+
+    raw_files_inventory = []
+    for label, p in (
+        ("events.csv", config.RAW_DATA_PATH),
+        ("category_tree.csv", config.CATEGORY_TREE_PATH),
+        ("item_properties_part1.csv", config.ITEM_PROPS_PART1_PATH),
+        ("item_properties_part2.csv", config.ITEM_PROPS_PART2_PATH),
+    ):
+        raw_files_inventory.append({
+            "file": label,
+            "present": bool(p.exists()),
+            "size_mb": round(p.stat().st_size / (1024 * 1024), 2) if p.exists() else 0.0,
+        })
+
     return {
         **clean_stats,
         "unique_visitors": int(events["visitorid"].nunique()),
         "unique_items": int(events["itemid"].nunique()),
+        "total_categories": n_categories,
+        "root_categories": n_root_categories,
+        "raw_files_inventory": raw_files_inventory,
         "total_sessions": n_sess,
         "date_min": dt.min().strftime("%Y-%m-%d"),
         "date_max": dt.max().strftime("%Y-%m-%d"),

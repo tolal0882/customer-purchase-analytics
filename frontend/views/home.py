@@ -27,7 +27,7 @@ except api_client.APIError as e:
 # =============================================================================
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Raw Clickstream Events", f"{ins.get('clean_event_rows', 0):,}", f"{ins.get('duplicates_removed', 0)} duplicates cleaned")
-c2.metric("Unique Visitors", f"{ins.get('unique_visitors', 0):,}", f"{ins.get('unique_items', 0):,} distinct products")
+c2.metric("Unique Visitors", f"{ins.get('unique_visitors', 0):,}", f"{ins.get('unique_items', 0):,} products · {ins.get('total_categories', 0):,} categories")
 c3.metric("Engineered Sessions", f"{ins.get('total_sessions', 0):,}", "30-min inactivity threshold")
 c4.metric("Cart Abandonment Rate", f"{ins.get('cart_abandonment_rate_pct', 0):.1f}%", f"Overall session conversion {ins.get('session_conversion_rate_pct', 0):.2f}%")
 

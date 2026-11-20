@@ -93,11 +93,13 @@ def get_schema() -> dict:
 
 
 def get_data(limit: int = 100, dataset: str = "modeling") -> dict:
-    """Return rows from either the modeling dataset (clean.csv) or customer_profiles.csv."""
+    """Return rows from clean.csv ('modeling'), customer_profiles.csv ('customers'), or category_tree.csv ('categories')."""
     if dataset == "customers":
         if not config.CUSTOMER_PROFILES_PATH.exists():
             make_dataset.main()
         df = pd.read_csv(config.CUSTOMER_PROFILES_PATH)
+    elif dataset == "categories" and config.CATEGORY_TREE_PATH.exists():
+        df = pd.read_csv(config.CATEGORY_TREE_PATH)
     else:
         df = _clean_data()
     rows = json.loads(df.head(limit).to_json(orient="records", date_format="iso"))

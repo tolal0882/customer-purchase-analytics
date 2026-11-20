@@ -5,6 +5,30 @@
   "invalid_rows_removed": 0,
   "unique_visitors": 1407580,
   "unique_items": 235061,
+  "total_categories": 1669,
+  "root_categories": 25,
+  "raw_files_inventory": [
+    {
+      "file": "events.csv",
+      "present": true,
+      "size_mb": 89.87
+    },
+    {
+      "file": "category_tree.csv",
+      "present": true,
+      "size_mb": 0.01
+    },
+    {
+      "file": "item_properties_part1.csv",
+      "present": true,
+      "size_mb": 461.88
+    },
+    {
+      "file": "item_properties_part2.csv",
+      "present": true,
+      "size_mb": 389.99
+    }
+  ],
   "total_sessions": 1761675,
   "date_min": "2015-05-03",
   "date_max": "2015-09-18",

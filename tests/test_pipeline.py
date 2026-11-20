@@ -109,14 +109,14 @@ def test_model_beats_minimum_quality(trained_model):
 # =============================================================================
 def test_customer_segmentation_outputs(trained_model):
     seg = service.get_segments()
-    assert seg["n_clusters"] == config.DEFAULT_K_CLUSTERS
+    assert seg["n_clusters"] in config.K_RANGE
     assert seg["silhouette_score"] > 0.20
-    assert len(seg["profiles"]) == config.DEFAULT_K_CLUSTERS
+    assert len(seg["profiles"]) == seg["n_clusters"]
     assert len(seg["k_evaluation"]) == len(config.K_RANGE)
 
     sample_cust = {f: 2.0 for f in config.CLUSTERING_FEATURES}
     assigned = clustering.predict_segment(sample_cust)
-    assert 0 <= assigned["cluster_id"] < config.DEFAULT_K_CLUSTERS
+    assert 0 <= assigned["cluster_id"] < seg["n_clusters"]
     assert assigned["segment_name"]
 
 

@@ -15,6 +15,9 @@ from pathlib import Path
 # =============================================================================
 ROOT_DIR = Path(__file__).resolve().parent.parent
 RAW_DATA_PATH = ROOT_DIR / "data" / "raw" / "events.csv"
+CATEGORY_TREE_PATH = ROOT_DIR / "data" / "raw" / "category_tree.csv"
+ITEM_PROPS_PART1_PATH = ROOT_DIR / "data" / "raw" / "item_properties_part1.csv"
+ITEM_PROPS_PART2_PATH = ROOT_DIR / "data" / "raw" / "item_properties_part2.csv"
 PROCESSED_DATA_PATH = ROOT_DIR / "data" / "processed" / "clean.csv"
 CUSTOMER_PROFILES_PATH = ROOT_DIR / "data" / "processed" / "customer_profiles.csv"
 INSIGHTS_SUMMARY_PATH = ROOT_DIR / "data" / "processed" / "insights_summary.json"

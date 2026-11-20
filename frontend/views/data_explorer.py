@@ -14,13 +14,17 @@ st.caption("Explore the leakage-safe Purchase Prediction dataset (`clean.csv`) a
 # =============================================================================
 # 1. DATASET SELECTOR & ROW LIMIT
 # =============================================================================
-c_ds, c_lim = st.columns([2, 1])
+c_ds, c_lim = st.columns([2.2, 1])
 ds_choice = c_ds.radio(
-    "Select Processed Dataset",
-    ["Purchase Prediction Snapshots (clean.csv)", "Customer Behavioral Profiles (customer_profiles.csv)"],
+    "Select Dataset",
+    [
+        "Purchase Prediction Snapshots (clean.csv)",
+        "Customer Behavioral Profiles (customer_profiles.csv)",
+        "Product Category Tree (category_tree.csv)",
+    ],
     horizontal=True,
 )
-ds_key = "modeling" if ds_choice.startswith("Purchase") else "customers"
+ds_key = "modeling" if ds_choice.startswith("Purchase") else ("customers" if ds_choice.startswith("Customer") else "categories")
 limit = int(c_lim.selectbox("Sample rows to load", [500, 1000, 3000, 5000], index=1))
 
 try:
@@ -30,6 +34,10 @@ except api_client.APIError as e:
     api_client.show_error_and_stop(e)
 
 df = pd.DataFrame(data["rows"], columns=data["columns"])
+if ds_key == "categories":
+    st.caption(f"Showing **{len(df):,}** of **{data['total_rows']:,}** categories from `data/raw/category_tree.csv` (`{int(df['parentid'].isna().sum())}` root categories).")
+    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.stop()
 target = schema["target"] if ds_key == "modeling" else "converted"
 
 # =============================================================================

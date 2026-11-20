@@ -1,7 +1,11 @@
 # Data Dictionary – Retailrocket E-commerce Dataset
 
 - **Source:** [Retailrocket Recommender System Dataset (Kaggle)](https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset)
-- **Raw File:** `data/raw/events.csv` (`2,756,101` rows × `5` columns, `96 MB`, covering `2015-05-03` to `2015-09-18`)
+- **Raw Files in `data/raw/`:**
+  - `events.csv` (`2,756,101` rows × `5` columns, `90 MB`, covering `2015-05-03` to `2015-09-18`)
+  - `category_tree.csv` (`1,669` rows × `2` columns: `categoryid`, `parentid`, with `25` root categories)
+  - `item_properties_part1.csv` (`10,999,999` rows × `4` columns, `462 MB`)
+  - `item_properties_part2.csv` (`9,275,903` rows × `4` columns, `390 MB`)
 - **Processed Modeling File:** `data/processed/clean.csv` (`30,000` leakage-safe early-session snapshots × `13` columns)
 - **Processed Customer Profiles:** `data/processed/customer_profiles.csv` (`25,000` engaged customers × `11` columns)
 
