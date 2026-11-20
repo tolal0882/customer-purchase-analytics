@@ -7,8 +7,7 @@ import streamlit as st
 from config import settings
 from src import data_loader, feature_engineering as fe, model_manager, pipeline
 
-DEFAULT_CFG = {"timeout": settings.DEFAULT_SESSION_TIMEOUT_MIN, "dedup": settings.DEFAULT_REMOVE_DUPLICATES,
-               "categories": False}
+DEFAULT_CFG = {"timeout": settings.DEFAULT_SESSION_TIMEOUT_MIN, "dedup": settings.DEFAULT_REMOVE_DUPLICATES}
 
 
 def cfg() -> dict:
@@ -19,10 +18,10 @@ def cfg() -> dict:
 
 
 @st.cache_resource(show_spinner=False, max_entries=3)
-def _core(timeout: float, dedup: bool, categories: bool):
+def _core(timeout: float, dedup: bool):
     # cache_resource (not cache_data): the 2.7M-row tables are shared by reference, never copied per rerun.
     # Pages must treat them as read-only.
-    return pipeline.build_core_tables(timeout, dedup, categories)
+    return pipeline.build_core_tables(timeout, dedup)
 
 
 def get_core():
@@ -32,35 +31,24 @@ def get_core():
         data_loader.events_path()
     except data_loader.DatasetNotFoundError:
         return None
-    return _core(float(c["timeout"]), bool(c["dedup"]), bool(c["categories"]))
-
-
-def has_item_properties() -> bool:
-    f = data_loader.discover_files()
-    return f["item_properties_part1"].exists or f["item_properties_part2"].exists
+    return _core(float(c["timeout"]), bool(c["dedup"]))
 
 
 @st.cache_resource(show_spinner=False, max_entries=4)
-def _snapshots(timeout, dedup, categories, policy, n_events, cutoff, history):
-    core = _core(timeout, dedup, categories)
+def _snapshots(timeout, dedup, policy, n_events, cutoff, history):
+    core = _core(timeout, dedup)
     return fe.build_prediction_snapshots(core.events, core.sessions, policy, n_events, cutoff, include_history=history)
 
 
 def get_snapshots(policy: str, n_events: int, cutoff: float):
     c = cfg()
-    return _snapshots(float(c["timeout"]), bool(c["dedup"]), bool(c["categories"]), policy, int(n_events),
-                      float(cutoff), True)
+    return _snapshots(float(c["timeout"]), bool(c["dedup"]), policy, int(n_events), float(cutoff), True)
 
 
 @st.cache_resource(show_spinner=False)
 def get_raw_events():
     """Original events.csv exactly as stored (read-only, shared by reference)."""
     return data_loader.read_events_raw()
-
-
-@st.cache_resource(show_spinner=False)
-def get_category_tree():
-    return data_loader.read_category_tree()
 
 
 @st.cache_resource(show_spinner=False, max_entries=8)

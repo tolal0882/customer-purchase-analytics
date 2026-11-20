@@ -7,8 +7,7 @@ import pandas as pd
 from config import settings
 
 
-def filter_events(events: pd.DataFrame, start=None, end=None, event_types=None, visitor_ids=None,
-                  category_ids=None) -> pd.DataFrame:
+def filter_events(events: pd.DataFrame, start=None, end=None, event_types=None, visitor_ids=None) -> pd.DataFrame:
     """Apply dashboard filters with one boolean mask (no intermediate copies)."""
     mask = np.ones(len(events), dtype=bool)
     if start is not None:
@@ -19,8 +18,6 @@ def filter_events(events: pd.DataFrame, start=None, end=None, event_types=None, 
         mask &= events["event"].isin(event_types).to_numpy()
     if visitor_ids:
         mask &= events["visitorid"].isin(list(visitor_ids)).to_numpy()
-    if category_ids and "categoryid" in events.columns:
-        mask &= events["categoryid"].isin(list(category_ids)).to_numpy()
     return events.loc[mask]
 
 
@@ -146,34 +143,3 @@ def item_conversion(ev: pd.DataFrame, min_carts: int = 5, n: int = 20) -> pd.Dat
     ct = ct[ct["addtocart"] >= min_carts].copy()
     ct["transactions_per_100_carts"] = ct["transaction"] / ct["addtocart"] * 100
     return ct.sort_values("transactions_per_100_carts", ascending=False).head(n).reset_index()
-
-
-def category_roots(tree: pd.DataFrame) -> pd.DataFrame:
-    """Root ancestor and depth for each category (iterative parent walk, cycle-safe)."""
-    parent = dict(zip(tree["categoryid"].astype(int), tree["parentid"].astype("float")))
-    root, depth = {}, {}
-    for c in parent:
-        cur, d, seen = c, 0, set()
-        while not np.isnan(parent.get(cur, np.nan)) and cur not in seen:
-            seen.add(cur)
-            cur = int(parent[cur])
-            d += 1
-            if cur not in parent:
-                break
-        root[c], depth[c] = cur, d
-    return pd.DataFrame({"categoryid": list(root), "root": list(root.values()), "depth": list(depth.values())})
-
-
-def category_performance(ev: pd.DataFrame, tree: pd.DataFrame | None, n: int = 20) -> pd.DataFrame:
-    sub = ev[ev["categoryid"].notna()]
-    ct = pd.crosstab(sub["categoryid"].astype(int), sub["event"])
-    for e in settings.VALID_EVENTS:
-        if e not in ct.columns:
-            ct[e] = 0
-    ct = ct[settings.VALID_EVENTS]
-    ct["total"] = ct.sum(axis=1)
-    ct["transactions_per_100_carts"] = np.where(ct["addtocart"] > 0, ct["transaction"] / ct["addtocart"].clip(lower=1) * 100, np.nan)
-    ct = ct.sort_values("total", ascending=False).head(n).reset_index().rename(columns={"categoryid": "categoryid"})
-    if tree is not None:
-        ct = ct.merge(tree.rename(columns={"parentid": "parent"})[["categoryid", "parent"]], on="categoryid", how="left")
-    return ct

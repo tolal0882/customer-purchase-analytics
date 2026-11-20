@@ -62,7 +62,6 @@ def derive_features(raw: dict, meta: dict) -> tuple[dict, list[str], list[str]]:
         "item_revisit_ratio": (1.0 - uniq / views) if views > 0 else 0.0,
         "first_cart_position": fcp, "ends_with_cart": int(bool(raw.get("ends_with_cart", False))),
         "start_hour": int(raw.get("start_hour", 12)), "start_dayofweek": int(raw.get("start_dayofweek", 0)),
-        "unique_categories_viewed": int(raw.get("unique_categories_viewed", 0)),
         "hist_prior_sessions": int(raw.get("hist_prior_sessions", 0)),
         "hist_prior_purchases": int(raw.get("hist_prior_purchases", 0)),
         "hist_hours_since_prev_session": raw.get("hist_hours_since_prev_session", np.nan),

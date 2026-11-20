@@ -16,7 +16,6 @@ DICTIONARY = {
     "transactionid": ("Order id; only present for transaction events. Not a model feature.", "raw"),
     "session_id": ("ENGINEERED: gap-based session id (new session after the configured inactivity timeout).", "engineered"),
     "event_pos": ("ENGINEERED: 0-based position of the event inside its session.", "engineered"),
-    "categoryid": ("ENGINEERED: category of the item as-of the event time (from item_properties).", "engineered"),
     "start_ts": ("Session start (epoch ms).", "engineered"), "end_ts": ("Session end (epoch ms).", "engineered"),
     "total_events": ("Events in the session / observed so far.", "engineered"),
     "total_views": ("Product views.", "engineered"), "add_to_cart_count": ("Add-to-cart events.", "engineered"),
@@ -34,7 +33,6 @@ DICTIONARY = {
     "average_session_duration": ("Mean session duration (s).", "engineered"),
     "days_since_last_activity": ("Days between visitor's last event and dataset end.", "engineered"),
     "historical_cart_abandonment_rate": ("Cart sessions without purchase / cart sessions (proxy; no remove-from-cart event exists).", "engineered"),
-    "categoryid_parent": ("Parent category.", "raw"), "parentid": ("Parent category id (empty = root).", "raw"),
 }
 
 
@@ -42,8 +40,6 @@ def _dataset(name: str):
     core = common.get_core()
     if name == "Raw events.csv (as stored)":
         return common.get_raw_events()
-    if name == "Category tree (raw)":
-        return common.get_category_tree()
     if core is None:
         return None
     if name == "Processed events (cleaned + sessions)":
@@ -53,7 +49,6 @@ def _dataset(name: str):
     if name == "Customer table":
         return core.customers.reset_index()
     if name == "Prediction snapshots":
-        c = common.cfg()
         return common.get_snapshots("n_events", settings.DEFAULT_SNAPSHOT_EVENTS, settings.DEFAULT_SNAPSHOT_CUTOFF_MIN).data.reset_index()
     return None
 
@@ -61,17 +56,17 @@ def _dataset(name: str):
 def render():
     ui.page_header("Dataset Explorer", "Inspect, search, sort, page through and export the original and processed datasets.")
     names = ["Raw events.csv (as stored)", "Processed events (cleaned + sessions)", "Session table", "Customer table",
-             "Prediction snapshots", "Category tree (raw)"]
+             "Prediction snapshots"]
     name = st.selectbox("Dataset", names, key="exp_ds")
-    if name in ("Raw events.csv (as stored)",) and not data_loader.discover_files()["events"].exists:
+    if name == "Raw events.csv (as stored)" and not data_loader.discover_files()["events"].exists:
         ui.empty_state("events.csv missing", data_loader.SETUP_INSTRUCTION, "📂")
         return
-    if name != "Raw events.csv (as stored)" and name != "Category tree (raw)":
+    if name != "Raw events.csv (as stored)":
         common.require_core()
     with ui.loading_state("Loading dataset…"):
         df = _dataset(name)
     if df is None:
-        ui.empty_state("Dataset not available", "category_tree.csv was not found in the raw data folder.", "🗂️")
+        ui.empty_state("Dataset not available", data_loader.SETUP_INSTRUCTION, "🗂️")
         return
     if name == "Prediction snapshots":
         st.caption("Default policy: snapshot after the 3rd non-transaction event (see Model Training for other policies).")

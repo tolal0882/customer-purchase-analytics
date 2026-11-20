@@ -17,16 +17,10 @@ def render():
     tmax = pd.to_datetime(ev_all["timestamp"].max(), unit="ms").date()
     with st.container(border=True):
         st.markdown('<div class="card-title">Filters</div>', unsafe_allow_html=True)
-        c1, c2, c3, c4 = st.columns([1.3, 1.2, 1, 1.3])
+        c1, c2, c3 = st.columns([1.3, 1.3, 1])
         dr = c1.date_input("Date range", (tmin, tmax), min_value=tmin, max_value=tmax, key="dash_dates")
         types = c2.multiselect("Event type", settings.VALID_EVENTS, default=settings.VALID_EVENTS, key="dash_types")
         vtxt = c3.text_input("Visitor ID (optional)", key="dash_visitor", placeholder="e.g. 257597")
-        cats = None
-        if "categoryid" in ev_all.columns and ev_all["categoryid"].notna().any():
-            top = ev_all["categoryid"].value_counts().head(200).index.astype(int).tolist()
-            cats = c4.multiselect("Product category", top, key="dash_cats", help="Top 200 categories by events (as-of join)")
-        else:
-            c4.caption("Category filter needs item properties: enable it on Data Preprocessing.")
     if isinstance(dr, tuple) and len(dr) == 2:
         start, end = dr
     else:
@@ -42,7 +36,7 @@ def render():
         ui.empty_state("No event type selected", "Select at least one event type.", "🎛️")
         st.stop()
 
-    ev = analytics.filter_events(ev_all, start, end, types, vids, cats)
+    ev = analytics.filter_events(ev_all, start, end, types, vids)
     if ev.empty:
         ui.empty_state("No events match the filters", "Widen the date range or clear the visitor/category filters.", "🔍")
         st.stop()

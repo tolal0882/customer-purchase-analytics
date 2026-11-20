@@ -25,7 +25,6 @@ SNAPSHOT_BASE_FEATURES = [
     "session_duration_sec", "avg_time_between_events_sec", "cart_interaction_ratio",
     "item_revisit_ratio", "first_cart_position", "ends_with_cart", "start_hour", "start_dayofweek",
 ]
-SNAPSHOT_CATEGORY_FEATURES = ["unique_categories_viewed"]
 SNAPSHOT_HISTORY_FEATURES = ["hist_prior_sessions", "hist_prior_purchases", "hist_hours_since_prev_session"]
 FORBIDDEN_FEATURES = {"visitorid", "itemid", "transactionid", "transaction_count", "target", "session_id",
                       "start_ts", "snapshot_ts", "purchase_sessions", "total_transactions"}
@@ -44,7 +43,6 @@ FEATURE_DESCRIPTIONS = {
     "ends_with_cart": "1 if the last pre-snapshot event was an add-to-cart.",
     "start_hour": "Hour of day (UTC) at which the session started.",
     "start_dayofweek": "Day of week (0=Mon) at which the session started.",
-    "unique_categories_viewed": "Distinct categories viewed (needs item_properties; as-of join, no look-ahead).",
     "hist_prior_sessions": "Visitor's earlier sessions (history window strictly before this session).",
     "hist_prior_purchases": "Visitor's transactions in EARLIER sessions only (default OFF: potentially strong, so opt-in).",
     "hist_hours_since_prev_session": "Hours since the visitor's previous session ended (NaN if first session).",
@@ -95,12 +93,6 @@ def aggregate_event_features(ev: pd.DataFrame) -> pd.DataFrame:
     pos = ev["event_pos"].to_numpy()
     fc = pd.Series(pos[is_cart]).groupby(sid[is_cart]).min()
     agg["first_cart_position"] = fc.reindex(idx).fillna(-1).astype("int32")
-
-    if "categoryid" in ev.columns:
-        cat = ev["categoryid"]
-        m = vmask & cat.notna().to_numpy()
-        pairs = pd.DataFrame({"s": sid[m], "c": cat.to_numpy()[m]}).drop_duplicates()
-        agg["unique_categories_viewed"] = pairs.groupby("s").size().reindex(idx, fill_value=0).astype("int32")
 
     n = agg["total_events"]
     dur = (agg["end_ts"] - agg["start_ts"]) / 1000.0
@@ -241,7 +233,7 @@ def build_prediction_snapshots(events: pd.DataFrame, sessions: pd.DataFrame, pol
 
 
 def available_snapshot_features(snap: pd.DataFrame) -> list[str]:
-    all_f = SNAPSHOT_BASE_FEATURES + SNAPSHOT_CATEGORY_FEATURES + SNAPSHOT_HISTORY_FEATURES
+    all_f = SNAPSHOT_BASE_FEATURES + SNAPSHOT_HISTORY_FEATURES
     return [f for f in all_f if f in snap.columns]
 
 

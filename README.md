@@ -48,11 +48,7 @@ customer-purchase-analytics/
 
 ## Dataset Setup
 
-Download the [Retailrocket E-commerce Dataset](https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset) from Kaggle and place the files into `data/raw/` (the app also automatically detects `data/row/` if already present):
-
-- `events.csv` (required)
-- `category_tree.csv` (optional)
-- `item_properties_part1.csv` & `item_properties_part2.csv` (optional enrichment; streamed in chunks only when enabled)
+Download the [Retailrocket E-commerce Dataset](https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset) from Kaggle and place `events.csv` into `data/raw/`.
 
 ## Installation & Execution
 

@@ -41,25 +41,12 @@ def _item_conv(v, min_carts):
     return analytics.item_conversion(common.get_core().events, min_carts, 20)
 
 
-@st.cache_data(show_spinner=False)
-def _cat_perf(v):
-    core = common.get_core()
-    return analytics.category_performance(core.events, common.get_category_tree(), 25)
-
-
-@st.cache_data(show_spinner=False)
-def _cat_event_counts(v):
-    ev = common.get_core().events
-    sub = ev[ev["categoryid"].notna()]
-    return sub.groupby("categoryid", observed=True).size().rename("events").reset_index().astype({"categoryid": "int64"})
-
-
 def render():
-    ui.page_header("Exploratory Data Analysis", "Event, visitor, session, purchase, product and category analysis on the full processed dataset.")
+    ui.page_header("Exploratory Data Analysis", "Event, visitor, session, purchase, and product analysis on the full processed dataset.")
     core = common.require_core()
     v = core.meta["dataset_version"]
     ss = core.sessions
-    tabs = st.tabs(["A · Events", "B · Visitors", "C · Sessions", "D · Purchases", "E · Products", "F · Categories"])
+    tabs = st.tabs(["A · Events", "B · Visitors", "C · Sessions", "D · Purchases", "E · Products"])
 
     with tabs[0]:
         a, b = st.columns(2)
@@ -169,44 +156,3 @@ def render():
             st.caption("Ratio can exceed 100: items are often bought without a prior add-to-cart event or carts are repeated.")
         with st.expander("Table: top products"):
             st.dataframe(ti.drop(columns="item"), use_container_width=True, hide_index=True)
-
-    with tabs[5]:
-        tree = common.get_category_tree()
-        has_cat = "categoryid" in core.events.columns and core.events["categoryid"].notna().any()
-        if tree is None:
-            ui.empty_state("category_tree.csv not found", data_loader_hint(), "🌳")
-        else:
-            roots = analytics.category_roots(tree)
-            st.caption(f"{len(tree):,} categories · {int(tree['parentid'].isna().sum())} roots · max depth {int(roots['depth'].max())}")
-        if tree is not None and not has_cat:
-            ui.note("Category performance needs item categories from the optional <b>item_properties</b> files. "
-                    "Enable <i>Attach item categories</i> on the <b>Data Preprocessing</b> page (one-time chunked read, cached).")
-            with ui.chart_card("Category tree structure (from category_tree.csv)"):
-                cnt = roots.groupby("root").size().rename("categories").reset_index()
-                cnt["root"] = cnt["root"].astype(str)
-                st.plotly_chart(charts.bar(cnt.sort_values("categories", ascending=False).head(25), "root", "categories", color=None), use_container_width=True)
-                st.caption("Number of categories under each root category.")
-        elif has_cat:
-            cov = core.events["categoryid"].notna().mean() * 100
-            st.caption(f"Category known for {cov:.1f}% of events (as-of join: earlier events of items whose first property record is later are unknown).")
-            cp = _cat_perf(v)
-            cp["category"] = cp["categoryid"].astype(str)
-            a, b = st.columns(2)
-            with a, ui.chart_card("Category interactions (top 25)"):
-                st.plotly_chart(charts.bar(cp.melt("category", ["view", "addtocart", "transaction"], var_name="event", value_name="count"),
-                                           "count", "category", color="event", orientation="h", text_auto=False, height=560), use_container_width=True)
-            with b, ui.chart_card("Category performance: transactions per 100 add-to-carts"):
-                st.plotly_chart(charts.bar(cp.dropna(subset=["transactions_per_100_carts"]), "transactions_per_100_carts", "category", orientation="h", color=None, height=560), use_container_width=True)
-            if tree is not None:
-                with ui.chart_card("Category tree (root → category), sized by events"):
-                    ec = _cat_event_counts(v).merge(roots, on="categoryid", how="left")
-                    ec = ec.dropna(subset=["root"]).sort_values("events", ascending=False).head(300)
-                    ec["root"] = "Root " + ec["root"].astype(int).astype(str)
-                    ec["cat"] = ec["categoryid"].astype(str)
-                    fig = px.treemap(ec, path=["root", "cat"], values="events", color_discrete_sequence=settings.CHART_COLORS)
-                    st.plotly_chart(charts.theme(fig, 520, False), use_container_width=True)
-                    st.caption("Top 300 categories by events.")
-
-
-def data_loader_hint():
-    return "Place category_tree.csv in the raw data folder (see Data Preprocessing)."

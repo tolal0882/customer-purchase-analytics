@@ -105,29 +105,3 @@ def clean_events(raw: pd.DataFrame, remove_duplicates: bool = settings.DEFAULT_R
     steps.attrs["rows_raw"] = n0
     steps.attrs["rows_clean"] = len(df)
     return CleaningResult(df, steps, removed, {"remove_duplicates": remove_duplicates, "drop_invalid": drop_invalid})
-
-
-def attach_categories(events: pd.DataFrame, item_cat_hist: pd.DataFrame | None,
-                      fallback_first: bool = False) -> pd.DataFrame:
-    """Add `categoryid` (nullable Int32) to events using an **as-of join**: each event gets the
-    item's category as known at (or before) the event time. This avoids look-ahead.
-
-    fallback_first=True additionally assigns an item's *earliest known* category to events that
-    happened before any record exists. That is acceptable for descriptive EDA but must NOT be
-    used for prediction features (it looks forward in time)."""
-    if item_cat_hist is None or item_cat_hist.empty:
-        return events.assign(categoryid=pd.array([pd.NA] * len(events), dtype="Int32"))
-    ev = events[["itemid", "timestamp"]].copy()
-    ev["_row"] = np.arange(len(ev))
-    ev = ev.sort_values("timestamp", kind="stable")
-    hist = item_cat_hist.sort_values("timestamp", kind="stable")
-    merged = pd.merge_asof(ev, hist, on="timestamp", by="itemid", direction="backward")
-    cat = merged.sort_values("_row")["categoryid"].to_numpy()
-    out = pd.Series(cat, dtype="Float64").astype("Int32")
-    if fallback_first:
-        first = hist.drop_duplicates("itemid", keep="first").set_index("itemid")["categoryid"]
-        fill = events["itemid"].map(first)
-        out = out.fillna(pd.Series(fill.to_numpy(), dtype="Float64").astype("Int32"))
-    res = events.copy()
-    res["categoryid"] = out.to_numpy()
-    return res

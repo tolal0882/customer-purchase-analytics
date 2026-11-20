@@ -57,16 +57,13 @@ def render():
     c = common.cfg()
     with ui.chart_card("3 · Processing settings", "Changing these rebuilds sessions and all downstream tables (results are cached on disk)."):
         with st.form("proc_form"):
-            f1, f2, f3 = st.columns(3)
+            f1, f2 = st.columns(2)
             timeout = f1.number_input("Session timeout (minutes)", 1.0, 1440.0, float(c["timeout"]), 1.0,
                                       help="A new session starts after this much inactivity. 30 min is a common analytical assumption, NOT a field in the dataset.")
             dedup = f2.checkbox("Remove exact duplicate rows", value=bool(c["dedup"]), help="Duplicates are always counted and shown; this only controls removal.")
-            cats_ok = common.has_item_properties()
-            cats = f3.checkbox("Attach item categories (item_properties)", value=bool(c["categories"]) and cats_ok, disabled=not cats_ok,
-                               help="Streams the large item_properties files once (chunked, ~1 GB) and joins categories as-of event time. Optional.")
             go = st.form_submit_button("Apply & rebuild", type="primary")
         if go:
-            st.session_state["cfg"] = {"timeout": timeout, "dedup": dedup, "categories": cats}
+            st.session_state["cfg"] = {"timeout": timeout, "dedup": dedup}
             st.rerun()
         ui.note("The 30-minute threshold is an analytical assumption. Different thresholds change session counts and therefore labels and features; "
                 "see the sensitivity table below.")
@@ -132,4 +129,4 @@ def render():
                 core.events.to_csv(p, index=False)
             st.success(f"Wrote {p} ({human_bytes(p.stat().st_size)}, {len(core.events):,} rows)")
         st.caption(f"Dataset version: `{meta['dataset_version']}` · built {meta['built_at'][:19]} in {meta['build_seconds']}s "
-                   f"(0 s when loaded from cache) · categories attached: {meta['categories_attached']}")
+                   "(0 s when loaded from cache)")

@@ -38,10 +38,6 @@ def test_analytics_functions(toy_events):
     filt = analytics.filter_events(ev, event_types=["addtocart"])
     assert len(filt) == 1 and (filt["event"] == "addtocart").all()
 
-    tree = pd.DataFrame({"categoryid": [1, 2, 3], "parentid": [None, 1, 2]})
-    roots = analytics.category_roots(tree).set_index("categoryid")
-    assert roots.loc[3, "root"] == 1 and roots.loc[3, "depth"] == 2
-
 
 def test_react_component_bundle_built():
     assert (rc.DIST / "index.html").exists(), "React dist/index.html missing — run npm run build in components/react"

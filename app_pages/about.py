@@ -88,12 +88,12 @@ def render():
                   (`{q.get('span_days', 0):.0f}` days), `{q.get('unique_visitorid', 0):,}` unique visitors, `{q.get('unique_itemid', 0):,}` unique items.
                 - **Active processed version:** `{m['dataset_version']}` — `{m['rows_clean']:,}` cleaned events,
                   `{m['n_sessions']:,}` engineered sessions (timeout: `{m['session_timeout_minutes']:g}` min),
-                  `{m['n_visitors']:,}` visitors, categories attached: `{m['categories_attached']}`.
+                  `{m['n_visitors']:,}` visitors.
                 - **Session Construction:** Events are stably sorted by `(visitorid, timestamp)`. A new `session_id` starts whenever a visitor's
                   inter-event gap exceeds the configured timeout (default **30 minutes**, an analytical assumption not present in the raw file).
                 - **Feature Engineering:** Session-level features (`total_events`, `total_views`, `unique_items_viewed`, `add_to_cart_count`,
                   `session_duration_sec`, `avg_time_between_events_sec`, `cart_interaction_ratio`, `item_revisit_ratio`, `first_cart_position`,
-                  `ends_with_cart`, `start_hour`, `start_dayofweek`, optional as-of `unique_categories_viewed`) and historical visitor features
+                  `ends_with_cart`, `start_hour`, `start_dayofweek`) and historical visitor features
                   (strictly earlier sessions only).
                 """
             )
@@ -135,10 +135,8 @@ def render():
                shows how session counts vary across timeouts.
             3. **Engaged-session scope:** ~78% of sessions contain only 1 event. Early-session prediction after 3 events applies specifically to
                engaged multi-event sessions (~95.6k eligible samples), not single-click bounces.
-            4. **Partial category coverage:** Only ~78.8% of event items appear in `item_properties_part1/2.csv`, and an as-of join leaves
-               events prior to an item's first property timestamp with unknown category.
-            5. **Behavioural clusters ≠ demographics:** K-Means segments reflect observed clickstream patterns only, not verified customer personas.
-            6. **Temporal drift:** The final month (September 2015) is partial and forms the chronological test window; seasonal shifts may affect generalisation.
+            4. **Behavioural clusters ≠ demographics:** K-Means segments reflect observed clickstream patterns only, not verified customer personas.
+            5. **Temporal drift:** The final month (September 2015) is partial and forms the chronological test window; seasonal shifts may affect generalisation.
             """
         )
 

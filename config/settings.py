@@ -27,14 +27,11 @@ PREDICTION_HISTORY_FILE = HISTORY_DIR / "prediction_history.csv"
 
 # =============================================================================
 # 2. DATASET SCHEMA & VALIDATION CONSTANTS
-#    - Only events.csv is required; category_tree & item_properties are optional.
+#    - Uses Retailrocket events.csv (core clickstream file).
 #    - Timestamps are validated against plausible epoch-ms bounds (2000–2100).
 # =============================================================================
 DATASET_FILES = {
     "events": "events.csv",
-    "category_tree": "category_tree.csv",
-    "item_properties_part1": "item_properties_part1.csv",
-    "item_properties_part2": "item_properties_part2.csv",
 }
 REQUIRED_FILES = ["events"]
 

@@ -16,7 +16,6 @@ DEFAULT_INPUTS = {
     "ends_with_cart": True,
     "start_hour": 14,
     "start_dayofweek": 2,
-    "unique_categories_viewed": 1,
     "hist_prior_sessions": 0,
     "hist_prior_purchases": 0,
     "hist_hours_since_prev_session": 0.0,
@@ -41,8 +40,6 @@ def _native_form(features: list[str], policy: str, n_events: int, vals: dict) ->
         v["ends_with_cart"] = bool(c8.checkbox("Last event was add-to-cart", value=bool(v["ends_with_cart"])))
         v["start_hour"] = int(c9.number_input("Start hour (0–23 UTC)", 0, 23, int(v["start_hour"])))
         v["start_dayofweek"] = int(st.selectbox("Weekday (0=Mon .. 6=Sun)", list(range(7)), index=int(v["start_dayofweek"])))
-        if "unique_categories_viewed" in fset:
-            v["unique_categories_viewed"] = int(st.number_input("Unique categories viewed", 0, 200, int(v["unique_categories_viewed"])))
         if "hist_prior_sessions" in fset:
             h1, h2, h3 = st.columns(3)
             v["hist_prior_sessions"] = int(h1.number_input("Visitor prior sessions", 0, 1000, int(v["hist_prior_sessions"])))
