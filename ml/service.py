@@ -37,8 +37,11 @@ FIELD_LABELS = {
 # 1. MODEL & DATA CACHING HELPERS
 # =============================================================================
 def _bundle():
-    if _cache["bundle"] is None and config.MODEL_PATH.exists():
-        _cache["bundle"] = joblib.load(config.MODEL_PATH)
+    if _cache["bundle"] is None:
+        if not config.MODEL_PATH.exists():
+            train.run(verbose=False)
+        if config.MODEL_PATH.exists():
+            _cache["bundle"] = joblib.load(config.MODEL_PATH)
     return _cache["bundle"]
 
 
@@ -107,6 +110,8 @@ def get_data(limit: int = 100, dataset: str = "modeling") -> dict:
 
 
 def get_metrics() -> dict | None:
+    if not config.METRICS_PATH.exists():
+        train.run(verbose=False)
     if not config.METRICS_PATH.exists():
         return None
     return json.loads(config.METRICS_PATH.read_text(encoding="utf-8"))
