@@ -1,0 +1,41 @@
+# =============================================================================
+# .gitignore — Files hidden from GitHub (secrets, environments, large data/models)
+# =============================================================================
+
+# Python virtual environment & bytecode caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# Node / React dependencies (re-installable via `npm install`)
+# NOTE: components/react/dist/ IS tracked (~170 KB) so anyone cloning the repo
+# gets the working React UI immediately without needing Node.js installed.
+components/react/node_modules/
+
+# Large Retailrocket raw datasets (~1 GB; download from Kaggle into data/raw/)
+data/raw/*.csv
+data/row/*.csv
+
+# Generated Parquet/CSV caches & local prediction history
+data/processed/*.parquet
+data/processed/*.csv
+data/processed/*.json
+data/history/*.csv
+
+# Trained model binaries & local experiment runs (generated when running the app)
+models/classification/*/
+models/classification/active.json
+models/customer_clustering/*.joblib
+models/customer_clustering/*.json
+models/session_clustering/*.joblib
+models/session_clustering/*.json
+experiments/*.json
+
+# OS & IDE files
+.DS_Store
+.vscode/
+.idea/
+.env
