@@ -90,6 +90,7 @@ def test_prediction_returns_valid_label_and_probabilities(trained_model):
     assert result["prediction"] in {config.POSITIVE_CLASS, config.NEGATIVE_CLASS}
     assert sum(result["probabilities"].values()) == pytest.approx(1.0, abs=1e-3)
     assert "intent_tier" in result and "business_recommendation" in result
+    assert "explanation" in result and len(result["explanation"]) > 0
 
 
 def test_missing_feature_raises_error(trained_model):
@@ -104,19 +105,46 @@ def test_model_beats_minimum_quality(trained_model):
     assert metrics["roc_auc"] > 0.70
 
 
-# =============================================================================
-# 5. UNSUPERVISED K-MEANS CUSTOMER SEGMENTATION TESTS
-# =============================================================================
-def test_customer_segmentation_outputs(trained_model):
-    seg = service.get_segments()
-    assert seg["n_clusters"] in config.K_RANGE
-    assert seg["silhouette_score"] > 0.20
-    assert len(seg["profiles"]) == seg["n_clusters"]
-    assert len(seg["k_evaluation"]) == len(config.K_RANGE)
+def test_interactive_custom_training_and_experiment_history(trained_model):
+    """Verify interactive model training with custom hyperparameters and sampling."""
+    rep = service.train_model({
+        "model_name": "Decision Tree",
+        "split_mode": "chronological",
+        "test_size": 0.2,
+        "cv_folds": 3,
+        "balanced": True,
+        "sampling": "undersample",
+        "threshold": 0.45,
+        "hyperparams": {"max_depth": 5, "min_samples_split": 20},
+    })
+    assert rep["best_model"] == "Decision Tree"
+    assert rep["training_config"]["threshold"] == 0.45
+    assert "curves" in rep and "roc" in rep["curves"] and "pr" in rep["curves"]
+    exps = service.list_experiments()
+    assert len(exps) >= 1
+    # Restore full 4-model benchmark as the default active model
+    full_rep = service.train_model({})
+    assert len(full_rep["cv_results"]) == 4
 
-    sample_cust = {f: 2.0 for f in config.CLUSTERING_FEATURES}
+
+# =============================================================================
+# 5. UNSUPERVISED K-MEANS CUSTOMER & SESSION SEGMENTATION TESTS
+# =============================================================================
+def test_customer_and_session_segmentation_outputs(trained_model):
+    for scope, feat_list in (
+        ("customer", config.CUSTOMER_CLUSTERING_FEATURES),
+        ("session", config.SESSION_CLUSTERING_FEATURES),
+    ):
+        seg = service.get_segments(scope=scope)
+        assert seg["scope"] == scope
+        assert seg["n_clusters"] in config.K_RANGE
+        assert seg["silhouette_score"] > 0.20
+        assert len(seg["profiles"]) == seg["n_clusters"]
+        assert len(seg["k_evaluation"]) == len(config.K_RANGE)
+
+    sample_cust = {f: 2.0 for f in config.CUSTOMER_CLUSTERING_FEATURES}
     assigned = clustering.predict_segment(sample_cust)
-    assert 0 <= assigned["cluster_id"] < seg["n_clusters"]
+    assert 0 <= assigned["cluster_id"] < config.DEFAULT_K_CLUSTERS
     assert assigned["segment_name"]
 
 

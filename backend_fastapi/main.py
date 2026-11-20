@@ -7,7 +7,7 @@ Interactive API docs: http://localhost:8000/docs
 """
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -15,13 +15,9 @@ from ml import service
 
 app = FastAPI(
     title="E-commerce Purchase Behavior Prediction & Customer Segmentation API",
-    version="1.0",
+    version="2.0",
 )
 
-# =============================================================================
-# 1. CORS CONFIGURATION
-#    - Allows the Streamlit frontend (and React components) to call this API.
-# =============================================================================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,38 +26,44 @@ app.add_middleware(
 )
 
 
-# =============================================================================
-# 2. REQUEST SCHEMAS (PYDANTIC MODELS)
-# =============================================================================
 class PredictRequest(BaseModel):
     features: dict[str, Any]
 
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "features": {
-                    "views_count": 2,
-                    "unique_items_viewed": 2,
-                    "add_to_cart_count": 1,
-                    "elapsed_seconds": 90.0,
-                    "ends_with_cart": "Yes",
-                    "start_hour": 14,
-                    "is_weekend": "No",
-                    "prior_sessions": 1,
-                    "prior_purchases": 0,
-                }
-            }
-        }
-    }
+
+class TrainRequest(BaseModel):
+    model_name: str = "all"
+    test_size: float = 0.2
+    random_state: int = 42
+    cv_folds: int = 5
+    selected_features: list[str] | None = None
+    balanced: bool = True
+    sampling: str = "none"
+    threshold: float = 0.5
+    split_mode: str = "chronological"
+    hyperparams: dict[str, Any] | None = None
+
+
+class ActivateExperimentRequest(BaseModel):
+    experiment_id: str
+
+
+class PreprocessRequest(BaseModel):
+    timeout_minutes: float = 30.0
+
+
+class SegmentFitRequest(BaseModel):
+    n_clusters: int = 4
+    scope: str = "customer"
+    features: list[str] | None = None
+    scaler: str = "standard"
+    use_log1p: bool = True
+    random_state: int = 42
 
 
 class SegmentPredictRequest(BaseModel):
     features: dict[str, Any]
 
 
-# =============================================================================
-# 3. CORE TEACHER TEMPLATE ENDPOINTS (SUPERVISED LEARNING + SQLITE HISTORY)
-# =============================================================================
 @app.get("/api/health")
 def health():
     return {"status": "ok", "backend": "fastapi"}
@@ -77,6 +79,14 @@ def data(limit: int = 100, dataset: str = "modeling"):
     return service.get_data(limit=limit, dataset=dataset)
 
 
+@app.post("/api/preprocess")
+def preprocess(req: PreprocessRequest):
+    try:
+        return service.run_preprocessing(timeout_minutes=req.timeout_minutes)
+    except RuntimeError as e:
+        raise HTTPException(400, str(e))
+
+
 @app.get("/api/metrics")
 def metrics():
     report = service.get_metrics()
@@ -86,8 +96,17 @@ def metrics():
 
 
 @app.post("/api/train")
-def train():
-    return service.train_model()
+def train(req: TrainRequest | None = None):
+    params = req.model_dump() if req is not None else None
+    return service.train_model(params=params)
+
+
+@app.post("/api/experiments/activate")
+def activate_experiment(req: ActivateExperimentRequest):
+    try:
+        return service.activate_experiment(req.experiment_id)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
 
 
 @app.post("/api/predict")
@@ -113,12 +132,35 @@ def clear_prediction_history():
     return {"deleted": deleted}
 
 
-# =============================================================================
-# 4. CUSTOMER SEGMENTATION (K-MEANS) & BUSINESS INSIGHTS ENDPOINTS
-# =============================================================================
 @app.get("/api/segments")
-def segments(k: int | None = None):
-    return service.get_segments(n_clusters=k)
+def segments(
+    k: int | None = None,
+    scope: str = "customer",
+    scaler: str = "standard",
+    use_log1p: bool = True,
+    random_state: int = 42,
+    features: list[str] | None = Query(default=None),
+):
+    return service.get_segments(
+        n_clusters=k,
+        scope=scope,
+        features=features,
+        scaler=scaler,
+        use_log1p=use_log1p,
+        random_state=random_state,
+    )
+
+
+@app.post("/api/segments/fit")
+def fit_segments(req: SegmentFitRequest):
+    return service.get_segments(
+        n_clusters=req.n_clusters,
+        scope=req.scope,
+        features=req.features,
+        scaler=req.scaler,
+        use_log1p=req.use_log1p,
+        random_state=req.random_state,
+    )
 
 
 @app.post("/api/segment/predict")
