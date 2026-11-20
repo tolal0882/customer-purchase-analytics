@@ -1,3 +1,14 @@
+---
+title: Retail Purchase Analytics
+emoji: 🛒
+colorFrom: green
+colorTo: gray
+sdk: streamlit
+sdk_version: 1.44.0
+app_file: streamlit_app.py
+pinned: false
+---
+
 # E-commerce Purchase Behavior Prediction and Customer Segmentation Using Machine Learning
 
 An interactive Data Science application built with **Streamlit** and **React + TypeScript + Tailwind CSS** for analyzing the **Retailrocket E-commerce Dataset** using the **CRISP-DM** methodology.
