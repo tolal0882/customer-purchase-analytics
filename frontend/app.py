@@ -15,7 +15,7 @@ for p in (str(FRONTEND_DIR), str(ROOT_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-# Clear any cached module references on hot reload
+# Force reload of config and service modules on Streamlit Cloud hot-reload
 import importlib
 try:
     import ml.service as _ml_service

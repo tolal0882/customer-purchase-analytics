@@ -23,9 +23,9 @@ ui.page_header(
     "Data Explorer & Preprocessing Pipeline",
     "Browse, search, filter, sort, and export datasets, or audit raw file validation, duplicate cleaning, and session construction.",
     badges=[
+        ("👤 Handled by: Seng Ranut", "ok"),
         (f"Raw Events: {ins.get('raw_rows', 2756101):,}", "neutral"),
-        (f"Duplicates Cleaned: {ins.get('duplicates_removed', 460):,}", "ok"),
-        (f"Session Timeout: {ins.get('session_timeout_minutes', 30):g} min", "info"),
+        (f"Duplicates Cleaned: {ins.get('duplicates_removed', 460):,}", "info"),
     ],
 )
 

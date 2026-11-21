@@ -23,8 +23,8 @@ ui.page_header(
     "System Architecture & Team Task Matrix",
     f"{config.PROJECT_TITLE} — {config.PROJECT_SUBTITLE}",
     badges=[
-        ("Team Size: 5 Members (25 Tasks)", "ok"),
-        ("Frontend: Streamlit + React 18 + Tailwind", "info"),
+        ("👤 Handled by: Long Tola (Team Leader)", "ok"),
+        ("Team Size: 5 Members (25 Tasks)", "info"),
         ("Backend & ML: FastAPI + Scikit-learn + SQLite", "neutral"),
     ],
 )
@@ -37,6 +37,15 @@ ui.kpi_row([
 ])
 
 # =============================================================================
+# 0. UI PAGE & FEATURE OWNERSHIP MAP (WHICH MEMBER HANDLES EACH UI FEATURE)
+# =============================================================================
+with ui.chart_card(
+    "UI Feature & Page Ownership Map (Who Handles Each Screen on the App)",
+    "Every sidebar feature/page in this web application is visibly badged with its responsible team member",
+):
+    st.dataframe(pd.DataFrame(config.UI_PAGE_OWNERS), use_container_width=True, hide_index=True)
+
+# =============================================================================
 # 1. 5-MEMBER TEAM TASK ALLOCATION (5 TASKS PER MEMBER = 25 TASKS)
 # =============================================================================
 with ui.chart_card(
@@ -47,6 +56,7 @@ with ui.chart_card(
     for member_info in config.TEAM_TASK_ASSIGNMENTS:
         summary_rows.append({
             "Team Member": member_info["member"],
+            "UI Features / Pages Handled": member_info.get("ui_features", "—"),
             "Primary Role": member_info["role"],
             "Assigned Tasks": "5 Tasks",
             "Owned Modules & Files": member_info["files"],
@@ -58,6 +68,7 @@ with ui.chart_card(
         target_col = cols[idx % 2] if idx < 4 else st.container()
         with target_col:
             with st.expander(f"👤 {member_info['member']} — {member_info['role']}", expanded=True):
+                st.markdown(f"**🖥️ UI Features Handled:** `{member_info.get('ui_features', '—')}`")
                 st.caption(f"**Owned Files:** `{member_info['files']}`")
                 for t in member_info["tasks"]:
                     st.markdown(f"- {t}")

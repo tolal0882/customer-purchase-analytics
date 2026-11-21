@@ -29,9 +29,9 @@ ui.page_header(
     "Model Training & Evaluation Studio",
     "Train and compare supervised early-session purchase classifiers with zero target leakage, and evaluate held-out test metrics and ROC/PR curves.",
     badges=[
-        (f"Active Winner: {report['best_model']}", "ok"),
-        (f"Test ROC-AUC: {tm.get('roc_auc', 0):.4f}", "info"),
-        (f"Test F1: {tm.get('f1', 0):.4f}", "neutral"),
+        ("👤 Handled by: Vy Soksamnang", "ok"),
+        (f"Active Winner: {report['best_model']}", "info"),
+        (f"Test ROC-AUC: {tm.get('roc_auc', 0):.4f} · F1: {tm.get('f1', 0):.4f}", "neutral"),
     ],
 )
 
