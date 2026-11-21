@@ -49,7 +49,12 @@ def _bundle():
         if not config.MODEL_PATH.exists():
             train.run(verbose=False)
         if config.MODEL_PATH.exists():
-            _cache["bundle"] = joblib.load(config.MODEL_PATH)
+            try:
+                _cache["bundle"] = joblib.load(config.MODEL_PATH)
+            except Exception:
+                # Re-train automatically if pickled under a different Python/scikit-learn version
+                train.run(verbose=False)
+                _cache["bundle"] = joblib.load(config.MODEL_PATH)
     return _cache["bundle"]
 
 
