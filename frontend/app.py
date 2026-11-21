@@ -70,18 +70,6 @@ SECTIONS = {
 }
 nav = st.navigation(SECTIONS, position="sidebar")
 
-# Short labels for the top quick-link row
-QUICK_LINKS = [
-    (pg_dashboard, "Dashboard", "📊"),
-    (pg_data, "Data", "🗂️"),
-    (pg_eda, "Analysis", "🔍"),
-    (pg_segments, "Segments", "👥"),
-    (pg_models, "Models", "🧠"),
-    (pg_predict, "Predict", "🎯"),
-    (pg_history, "History", "📜"),
-    (pg_system, "System", "ℹ️"),
-]
-
 current_section = next(
     (name for name, pages in SECTIONS.items() if any(pg.title == nav.title for pg in pages)),
     "Overview",
@@ -115,12 +103,7 @@ except Exception:
 # =============================================================================
 # 4. TOP APP BAR + SIDEBAR STATUS PANEL
 # =============================================================================
-ui.top_bar(current_section, nav.title, status["pills"])
-cols = st.columns(len(QUICK_LINKS))
-for col, (page_obj, label, icon) in zip(cols, QUICK_LINKS):
-    with col:
-        st.page_link(page_obj, label=label, icon=icon, use_container_width=True)
-
+ui.top_bar(current_section, nav.title, status["pills"], icon=nav.icon or "")
 ui.sidebar_status(status["dataset"], status["model"], status["backend"])
 
 nav.run()

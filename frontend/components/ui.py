@@ -36,7 +36,7 @@ CSS = f"""
 html, body, [class*="css"], .stApp {{ font-family: 'Inter', system-ui, sans-serif; color: {C['text']}; }}
 .stApp {{ background: {C['background']}; }}
 header[data-testid="stHeader"] {{ background: transparent; }}
-.block-container {{ padding-top: 1.5rem; padding-bottom: 3rem; max-width: 1400px; }}
+.block-container {{ padding-top: 4.9rem; padding-bottom: 3rem; max-width: 1400px; }}
 
 /* Sidebar */
 section[data-testid="stSidebar"] {{ background: {C['forest']}; }}
@@ -151,10 +151,17 @@ section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"][aria-current=
 
 /* Top app bar */
 .topbar {{
-    display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;
-    background:#fff; border:1px solid {C['border']}; border-radius:14px; padding:.65rem 1rem;
-    margin-bottom:.6rem; box-shadow:0 1px 3px rgba(21,62,45,.05);
+    position: fixed; top: .35rem; left: 3.2rem; right: 9rem; height: 3.1rem; z-index: 999980;
+    display:flex; justify-content:space-between; align-items:center; gap:1rem;
+    background:#fff; border:1px solid {C['border']}; border-radius:14px; padding:0 1rem;
+    box-shadow:0 2px 8px rgba(21,62,45,.10);
 }}
+/* When the sidebar is open, start the bar to the right of it */
+body:has(section[data-testid="stSidebar"][aria-expanded="true"]) .topbar {{ left: 21.6rem; }}
+.topbar .tb-title {{ font-size:1.1rem; font-weight:700; color:{C['forest']}; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+.topbar .tb-ico {{ width:34px; height:34px; border-radius:10px; background:{C['forest']}; color:{C['accent']};
+    display:flex; align-items:center; justify-content:center; font-size:1.05rem; flex-shrink:0; }}
+@media (max-width: 900px) {{ .topbar .tb-right {{ display:none; }} .topbar {{ right: 6rem; }} }}
 .topbar .tb-left {{ display:flex; align-items:center; gap:.75rem; }}
 .topbar .logo {{ background:{C['forest']}; color:{C['accent']}; width:36px; height:36px; border-radius:10px;
     display:flex; align-items:center; justify-content:center; font-weight:800; }}
@@ -296,13 +303,14 @@ def sidebar(pages_list: list[tuple[object, str, str]], status_info: dict) -> Non
         )
 
 
-def top_bar(section: str, title: str, pills: list[tuple[str, str]] | None = None) -> None:
-    """Top application bar: brand, breadcrumb (Category > Page) and live status pills."""
+def top_bar(section: str, title: str, pills: list[tuple[str, str]] | None = None, icon: str = "") -> None:
+    """Fixed top bar: shows the CURRENT page name (with icon), its category, and live status pills."""
     p = "".join(badge(t, k) for t, k in (pills or []))
+    ico = f'<div class="tb-ico">{esc(icon)}</div>' if icon else ""
     st.markdown(
-        f'<div class="topbar"><div class="tb-left"><div class="logo">R</div>'
-        f'<div><div class="tb-brand">Retail Analytics</div>'
-        f'<div class="tb-crumb">{esc(section)} &rsaquo; <b>{esc(title)}</b></div></div></div>'
+        f'<div class="topbar"><div class="tb-left">{ico}'
+        f'<div><div class="tb-crumb">Retail Analytics &rsaquo; {esc(section)}</div>'
+        f'<div class="tb-title">{esc(title)}</div></div></div>'
         f'<div class="tb-right">{p}</div></div>',
         unsafe_allow_html=True,
     )
