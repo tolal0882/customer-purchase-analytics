@@ -39,54 +39,59 @@ def _request(method: str, path: str, **kwargs):
     except requests.ConnectionError:
         from ml import service
 
-        params = kwargs.get("params") or {}
-        payload = kwargs.get("json") or {}
-        if path == "/api/health":
-            return {"status": "ok", "backend": "direct (ml.service)"}
-        if path == "/api/schema":
-            return service.get_schema()
-        if path == "/api/data":
-            return service.get_data(limit=params.get("limit", 1000), dataset=params.get("dataset", "modeling"))
-        if path == "/api/preprocess" and method == "POST":
-            return service.run_preprocessing(timeout_minutes=payload.get("timeout_minutes", 30.0))
-        if path == "/api/metrics":
-            rep = service.get_metrics()
-            if rep is None:
-                raise APIError("404: Model is not trained yet.")
-            return rep
-        if path == "/api/train" and method == "POST":
-            return service.train_model(params=payload or None)
-        if path == "/api/experiments/activate" and method == "POST":
-            return service.activate_experiment(payload.get("experiment_id", ""))
-        if path == "/api/predict" and method == "POST":
-            res = service.make_prediction(payload.get("features", {}))
-            service.log_prediction(payload.get("features", {}), res)
-            return res
-        if path == "/api/predictions" and method == "GET":
-            return {"items": service.get_predictions(limit=params.get("limit", 100))}
-        if path == "/api/predictions" and method == "DELETE":
-            return {"deleted": service.clear_predictions()}
-        if path == "/api/segments":
-            return service.get_segments(
-                n_clusters=params.get("k"),
-                scope=params.get("scope", "customer"),
-                scaler=params.get("scaler", "standard"),
-                use_log1p=params.get("use_log1p", True),
-                random_state=params.get("random_state", 42),
-            )
-        if path == "/api/segments/fit" and method == "POST":
-            return service.get_segments(
-                n_clusters=payload.get("n_clusters", 4),
-                scope=payload.get("scope", "customer"),
-                features=payload.get("features"),
-                scaler=payload.get("scaler", "standard"),
-                use_log1p=payload.get("use_log1p", True),
-                random_state=payload.get("random_state", 42),
-            )
-        if path == "/api/segment/predict" and method == "POST":
-            return service.predict_customer_segment(payload.get("features", {}))
-        if path == "/api/insights":
-            return service.get_insights()
+        try:
+            params = kwargs.get("params") or {}
+            payload = kwargs.get("json") or {}
+            if path == "/api/health":
+                return {"status": "ok", "backend": "direct (ml.service)"}
+            if path == "/api/schema":
+                return service.get_schema()
+            if path == "/api/data":
+                return service.get_data(limit=params.get("limit", 1000), dataset=params.get("dataset", "modeling"))
+            if path == "/api/preprocess" and method == "POST":
+                return service.run_preprocessing(timeout_minutes=payload.get("timeout_minutes", 30.0))
+            if path == "/api/metrics":
+                rep = service.get_metrics()
+                if rep is None:
+                    raise APIError("404: Model is not trained yet.")
+                return rep
+            if path == "/api/train" and method == "POST":
+                return service.train_model(params=payload or None)
+            if path == "/api/experiments/activate" and method == "POST":
+                return service.activate_experiment(payload.get("experiment_id", ""))
+            if path == "/api/predict" and method == "POST":
+                res = service.make_prediction(payload.get("features", {}))
+                service.log_prediction(payload.get("features", {}), res)
+                return res
+            if path == "/api/predictions" and method == "GET":
+                return {"items": service.get_predictions(limit=params.get("limit", 100))}
+            if path == "/api/predictions" and method == "DELETE":
+                return {"deleted": service.clear_predictions()}
+            if path == "/api/segments":
+                return service.get_segments(
+                    n_clusters=params.get("k"),
+                    scope=params.get("scope", "customer"),
+                    scaler=params.get("scaler", "standard"),
+                    use_log1p=params.get("use_log1p", True),
+                    random_state=params.get("random_state", 42),
+                )
+            if path == "/api/segments/fit" and method == "POST":
+                return service.get_segments(
+                    n_clusters=payload.get("n_clusters", 4),
+                    scope=payload.get("scope", "customer"),
+                    features=payload.get("features"),
+                    scaler=payload.get("scaler", "standard"),
+                    use_log1p=payload.get("use_log1p", True),
+                    random_state=payload.get("random_state", 42),
+                )
+            if path == "/api/segment/predict" and method == "POST":
+                return service.predict_customer_segment(payload.get("features", {}))
+            if path == "/api/insights":
+                return service.get_insights()
+        except APIError:
+            raise
+        except Exception as exc:
+            raise APIError(str(exc)) from exc
         raise APIError(f"Cannot connect to backend at {API_URL}.")
 
 

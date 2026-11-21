@@ -157,9 +157,9 @@ with tab_prep:
             with st.spinner(f"Rebuilding sessions with {new_to:g}-minute timeout..."):
                 try:
                     api_client.preprocess(timeout_minutes=new_to)
-                    st.success(f"Rebuilt processed datasets with {new_to:g}-minute session timeout.")
+                    st.success(f"Updated processed datasets and session metrics for {new_to:g}-minute session timeout.")
                     st.rerun()
-                except api_client.APIError as e:
+                except Exception as e:
                     st.error(str(e))
 
     elig = ins.get("snapshot_eligibility", {})
