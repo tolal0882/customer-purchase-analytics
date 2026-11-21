@@ -35,15 +35,23 @@ CSS = f"""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 html, body, [class*="css"], .stApp {{ font-family: 'Inter', system-ui, sans-serif; color: {C['text']}; }}
 .stApp {{ background: {C['background']}; }}
-header[data-testid="stHeader"] {{ background: transparent; }}
-.block-container {{ padding-top: 4.9rem; padding-bottom: 3rem; max-width: 1400px; }}
+header[data-testid="stHeader"] {{ background: transparent; pointer-events: none; }}
+header[data-testid="stHeader"] * {{ pointer-events: auto; }}
+.block-container {{
+    padding-top: 5.5rem !important;
+    padding-left: clamp(1rem, 2.5vw, 2.5rem) !important;
+    padding-right: clamp(1rem, 2.5vw, 2.5rem) !important;
+    padding-bottom: 3rem !important;
+    max-width: 100% !important;
+    width: 100% !important;
+}}
 
 /* Sidebar */
 section[data-testid="stSidebar"] {{ background: {C['forest']}; }}
 section[data-testid="stSidebar"] * {{ color: #E8F1EA; }}
 section[data-testid="stSidebar"] hr {{ border-color: rgba(255,255,255,.15); }}
 section[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] {{
-    border-radius: 10px; padding: .48rem .75rem; margin: 2px 0; text-decoration: none;
+    border-radius: 10px; padding: .55rem .8rem; margin: 2px 0; text-decoration: none;
     transition: background 0.15s ease;
 }}
 section[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover {{ background: rgba(255,255,255,.08); }}
@@ -51,37 +59,37 @@ section[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"][aria-curren
     background: {C['primary']} !important; font-weight: 600; box-shadow: inset 3px 0 0 {C['accent']};
 }}
 .brand {{ display:flex; gap:.75rem; align-items:center; padding:.25rem .2rem 1rem; }}
-.brand .logo {{ background:{C['accent']}; color:{C['forest']} !important; width:40px; height:40px; border-radius:11px;
-    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2rem; flex-shrink:0; }}
-.brand .t1 {{ font-weight:700; font-size:1.02rem; line-height:1.15; color:#fff !important; }}
-.brand .t2 {{ font-size:.73rem; opacity:.8; color:#DDF3E4 !important; }}
-.side-status {{ font-size:.78rem; line-height:1.55; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
-    border-radius:12px; padding:.7rem .8rem; }}
+.brand .logo {{ background:{C['accent']}; color:{C['forest']} !important; width:42px; height:42px; border-radius:11px;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.25rem; flex-shrink:0; }}
+.brand .t1 {{ font-weight:700; font-size:1.08rem; line-height:1.15; color:#fff !important; }}
+.brand .t2 {{ font-size:.78rem; opacity:.8; color:#DDF3E4 !important; }}
+.side-status {{ font-size:.82rem; line-height:1.55; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
+    border-radius:12px; padding:.8rem .9rem; }}
 
 /* Page header */
 .page-header {{
     background: #FFFFFF;
     border: 1px solid {C['border']};
     border-radius: 16px;
-    padding: 1.15rem 1.35rem;
-    margin-bottom: 1.15rem;
+    padding: 1.35rem 1.6rem;
+    margin-bottom: 1.25rem;
     box-shadow: 0 1px 3px rgba(21,62,45,.04);
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
 }}
-.page-header h1 {{ font-size: 1.55rem; font-weight: 700; color: {C['forest']}; margin: 0; padding: 0; line-height: 1.2; }}
-.page-header p {{ color: {C['muted']}; margin: .3rem 0 0; font-size: .9rem; max-width: 880px; }}
-.page-header .badges {{ display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }}
+.page-header h1 {{ font-size: clamp(1.35rem, 2vw, 1.85rem); font-weight: 700; color: {C['forest']}; margin: 0; padding: 0; line-height: 1.2; }}
+.page-header p {{ color: {C['muted']}; margin: .35rem 0 0; font-size: .96rem; max-width: 960px; }}
+.page-header .badges {{ display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }}
 
 /* KPI Cards */
-.kpi {{ background:#fff; border:1px solid {C['border']}; border-radius:14px; padding:.95rem 1.1rem;
-    box-shadow:0 1px 3px rgba(21,62,45,.05); height:100%; margin-bottom: .65rem; }}
-.kpi .l {{ font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.045em; color:{C['muted']}; }}
-.kpi .v {{ font-size:1.5rem; font-weight:700; color:{C['forest']}; margin-top:.18rem; line-height: 1.2; }}
-.kpi .h {{ font-size:.74rem; color:{C['muted']}; margin-top:.2rem; }}
+.kpi {{ background:#fff; border:1px solid {C['border']}; border-radius:14px; padding:1.1rem 1.25rem;
+    box-shadow:0 1px 3px rgba(21,62,45,.05); height:100%; margin-bottom: .75rem; }}
+.kpi .l {{ font-size:.76rem; font-weight:600; text-transform:uppercase; letter-spacing:.045em; color:{C['muted']}; }}
+.kpi .v {{ font-size:clamp(1.35rem, 1.8vw, 1.75rem); font-weight:700; color:{C['forest']}; margin-top:.22rem; line-height: 1.2; }}
+.kpi .h {{ font-size:.8rem; color:{C['muted']}; margin-top:.25rem; }}
 
 div[data-testid="stVerticalBlockBorderWrapper"] {{
     background:#fff; border-radius:14px; border-color:{C['border']};
@@ -89,13 +97,13 @@ div[data-testid="stVerticalBlockBorderWrapper"] {{
 }}
 div[data-testid="stMetric"] {{
     background: #FFFFFF; border: 1px solid {C['border']}; border-radius: 14px;
-    padding: 0.85rem 1rem; box-shadow: 0 1px 3px rgba(21,62,45,0.05);
+    padding: 1rem 1.15rem; box-shadow: 0 1px 3px rgba(21,62,45,0.05);
 }}
-.card-title {{ font-weight:600; color:{C['forest']}; font-size:1.02rem; margin-bottom:.1rem; }}
-.card-sub {{ color:{C['muted']}; font-size:.8rem; margin-bottom:.5rem; }}
+.card-title {{ font-weight:600; color:{C['forest']}; font-size:1.1rem; margin-bottom:.15rem; }}
+.card-sub {{ color:{C['muted']}; font-size:.86rem; margin-bottom:.55rem; }}
 
 /* Badges */
-.badge {{ display:inline-block; padding:.16rem .65rem; border-radius:999px; font-size:.73rem; font-weight:600; }}
+.badge {{ display:inline-block; padding:.22rem .75rem; border-radius:999px; font-size:.78rem; font-weight:600; }}
 .badge.ok {{ background:#DDF3E4; color:#1B5E3B !important; }}
 .badge.warn {{ background:#FBF0D0; color:#8A5B00 !important; }}
 .badge.err {{ background:#FADBD8; color:#922B21 !important; }}
@@ -146,26 +154,61 @@ section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"][aria-current=
     background:{C['primary']} !important; font-weight:600; box-shadow: inset 3px 0 0 {C['accent']};
 }}
 
-/* Top app bar */
+/* Top app bar (full-width fixed header aligned with sidebar & responsive on mobile) */
 .topbar {{
-    position: fixed; top: .35rem; left: 3.2rem; right: 9rem; height: 3.1rem; z-index: 999980;
+    position: fixed; top: 0; left: 0; right: 0; height: 4.1rem; z-index: 999980;
     display:flex; justify-content:space-between; align-items:center; gap:1rem;
-    background:#fff; border:1px solid {C['border']}; border-radius:14px; padding:0 1rem;
-    box-shadow:0 2px 8px rgba(21,62,45,.10);
+    background:#FFFFFF; border-bottom:1px solid {C['border']};
+    padding: 0 9.5rem 0 3.75rem;
+    box-shadow:0 2px 10px rgba(21,62,45,.07);
+    transition: left 0.2s ease, padding-left 0.2s ease;
 }}
-/* When the sidebar is open (300px wide), start the bar to the right of it */
-body:has(section[data-testid="stSidebar"][data-collapsed="false"]) .topbar {{ left: 316px; }}
-.topbar .tb-title {{ font-size:1.1rem; font-weight:700; color:{C['forest']}; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
-.topbar .tb-ico {{ width:34px; height:34px; border-radius:10px; background:{C['forest']}; color:{C['accent']};
-    display:flex; align-items:center; justify-content:center; font-size:1.05rem; flex-shrink:0; }}
-@media (max-width: 900px) {{ .topbar .tb-right {{ display:none; }} .topbar {{ right: 6rem; }} }}
-.topbar .tb-left {{ display:flex; align-items:center; gap:.75rem; }}
-.topbar .logo {{ background:{C['forest']}; color:{C['accent']}; width:36px; height:36px; border-radius:10px;
-    display:flex; align-items:center; justify-content:center; font-weight:800; }}
-.topbar .tb-brand {{ font-weight:700; color:{C['forest']}; line-height:1.1; }}
-.topbar .tb-crumb {{ font-size:.78rem; color:{C['muted']}; }}
-.topbar .tb-crumb b {{ color:{C['text']}; }}
-.topbar .tb-right {{ display:flex; gap:.4rem; flex-wrap:wrap; }}
+/* When the sidebar is open on desktop (300px wide), start the bar flush to the right of it */
+body:has(section[data-testid="stSidebar"][data-collapsed="false"]) .topbar {{
+    left: 300px;
+    padding-left: 1.75rem;
+}}
+.topbar .tb-left {{ display:flex; align-items:center; gap:.85rem; min-width: 0; }}
+.topbar .tb-title {{ font-size:1.28rem; font-weight:700; color:{C['forest']}; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+.topbar .tb-ico {{ width:40px; height:40px; border-radius:11px; background:{C['forest']}; color:{C['accent']};
+    display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }}
+.topbar .tb-crumb {{ font-size:.8rem; color:{C['muted']}; font-weight:500; }}
+.topbar .tb-right {{ display:flex; gap:.45rem; flex-wrap:nowrap; align-items:center; flex-shrink:0; }}
+
+/* Responsive breakpoints for tablet & mobile */
+@media (max-width: 1100px) {{
+    div[data-testid="stHorizontalBlock"] {{
+        flex-wrap: wrap !important;
+        gap: 0.75rem !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
+        flex: 1 1 46% !important;
+        min-width: 240px !important;
+    }}
+}}
+@media (max-width: 768px) {{
+    body:has(section[data-testid="stSidebar"][data-collapsed="false"]) .topbar {{
+        left: 0 !important;
+        padding-left: 3.5rem !important;
+    }}
+    .topbar {{
+        height: 3.75rem;
+        padding: 0 5.5rem 0 3.5rem;
+    }}
+    .topbar .tb-right {{ display:none; }}
+    .topbar .tb-title {{ font-size: 1.08rem; }}
+    .topbar .tb-ico {{ width: 34px; height: 34px; font-size: 1rem; }}
+    .block-container {{
+        padding-top: 4.8rem !important;
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }}
+    .page-header {{ padding: 1rem 1.1rem; }}
+}}
 
 /* Top quick-link row (main area page links) */
 [data-testid="stMain"] a[data-testid="stPageLink-NavLink"] {{
