@@ -55,7 +55,7 @@ with ui.chart_card(
 
     cols = st.columns(2)
     for idx, member_info in enumerate(config.TEAM_TASK_ASSIGNMENTS):
-        target_col = cols[idx % 2] if idx < 4 else st
+        target_col = cols[idx % 2] if idx < 4 else st.container()
         with target_col:
             with st.expander(f"👤 {member_info['member']} — {member_info['role']}", expanded=True):
                 st.caption(f"**Owned Files:** `{member_info['files']}`")

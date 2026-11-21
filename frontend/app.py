@@ -25,6 +25,7 @@ except Exception:
 import api_client
 importlib.reload(api_client)
 import config
+importlib.reload(config)
 try:
     from components import ui
 except ImportError:
