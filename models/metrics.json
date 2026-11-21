@@ -1,5 +1,5 @@
 {
-  "trained_at": "2026-11-21T00:16:01",
+  "trained_at": "2026-11-21T07:50:43",
   "task_type": "classification",
   "target": "will_purchase",
   "primary_metric": "f1",
@@ -798,7 +798,7 @@
     "confusion_matrix.png",
     "roc_curve.png"
   ],
-  "experiment_id": "20261121_001601_870021",
+  "experiment_id": "20261121_075043_581de4",
   "clustering_summary": {
     "n_clusters": 4,
     "n_customers": 25000,

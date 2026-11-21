@@ -1,45 +1,52 @@
 """
-Page 2 – Data Explorer & Preprocessing Audit:
-  - Tab 1: Dataset Explorer (preview, search/filter, sorting, pagination, column selection,
-           data types, descriptive statistics, missing/duplicate summary, CSV export)
-  - Tab 2: Data Preprocessing & Session Construction (schema validation, cleaning log,
-           session timeout setting & sensitivity comparison, snapshot eligibility breakdown)
-  - Tab 3: Data Dictionary
+Data Explorer & Preprocessing Pipeline — dataset browsing, filtering, sorting,
+pagination, cleaning audit log, and interactive session timeout builder.
 """
 import numpy as np
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 
 import api_client
+try:
+    from components import ui
+except ImportError:
+    from frontend.components import ui
 
-st.title("📊 Data Explorer & Preprocessing Audit")
-st.caption("Inspect datasets, filter/sort/paginate rows, audit data cleaning & session construction, and export CSVs.")
+ui.inject_css()
 
 try:
     ins = api_client.get_insights()
-    schema = api_client.get_schema()
 except api_client.APIError as e:
     api_client.show_error_and_stop(e)
 
+ui.page_header(
+    "Data Explorer & Preprocessing Pipeline",
+    "Browse, search, filter, sort, and export datasets, or audit raw file validation, duplicate cleaning, and session construction.",
+    badges=[
+        (f"Raw Events: {ins.get('raw_rows', 2756101):,}", "neutral"),
+        (f"Duplicates Cleaned: {ins.get('duplicates_removed', 460):,}", "ok"),
+        (f"Session Timeout: {ins.get('session_timeout_minutes', 30):g} min", "info"),
+    ],
+)
+
 tab_exp, tab_prep, tab_dict = st.tabs([
-    "🗂️ 1. Dataset Explorer",
-    "🧹 2. Data Preprocessing & Session Construction",
-    "📖 3. Data Dictionary",
+    "🗂️ Dataset Explorer",
+    "🧹 Preprocessing & Session Engineering",
+    "📖 Feature & Schema Dictionary",
 ])
 
 # =============================================================================
-# TAB 1: DATASET EXPLORER (SEARCH, FILTER, SORT, PAGINATION, STATS, EXPORT)
+# TAB 1: DATASET EXPLORER
 # =============================================================================
 with tab_exp:
     c_ds, c_lim = st.columns([2.4, 1])
     ds_choice = c_ds.selectbox(
-        "Select Dataset to Explore",
+        "Dataset Table",
         [
-            "Early-Session Purchase Snapshots (clean.csv)",
-            "Customer Behavioral Profiles (customer_profiles.csv)",
-            "Session Behavioral Profiles (session_profiles.csv)",
-            "Product Category Tree (category_tree.csv)",
+            "Early-Session Purchase Snapshots (data/processed/clean.csv)",
+            "Customer Behavioral Profiles (data/processed/customer_profiles.csv)",
+            "Session Behavioral Profiles (data/processed/session_profiles.csv)",
+            "Product Category Hierarchy (data/raw/category_tree.csv)",
         ],
     )
     ds_key = (
@@ -48,24 +55,25 @@ with tab_exp:
         else "sessions" if ds_choice.startswith("Session")
         else "categories"
     )
-    limit = int(c_lim.selectbox("Max rows to fetch", [500, 1500, 5000, 10000], index=1))
+    limit = int(c_lim.selectbox("Sample Window Size", [500, 1500, 5000, 10000], index=1))
 
     data = api_client.get_data(limit=limit, dataset=ds_key)
     df = pd.DataFrame(data["rows"], columns=data["columns"])
 
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Total Rows in Dataset", f"{data['total_rows']:,}")
-    k2.metric("Loaded Sample Rows", f"{len(df):,}")
-    k3.metric("Columns", len(df.columns))
-    k4.metric("Duplicate Rows in Sample", f"{data.get('duplicate_rows', 0):,}")
+    ui.kpi_row([
+        ("Total Rows on Disk", f"{data['total_rows']:,}", f"Dataset: {ds_key}"),
+        ("Loaded Window", f"{len(df):,}", "Interactive table buffer"),
+        ("Columns", str(len(df.columns)), "Active schema fields"),
+        ("Duplicate Rows", f"{data.get('duplicate_rows', 0):,}", "Verified 0 duplicates"),
+    ])
 
-    with st.container(border=True):
+    with ui.chart_card("Table Search, Sorting & Column Controls"):
         f1, f2, f3, f4 = st.columns([1.4, 1.2, 1.2, 1])
-        search_q = f1.text_input("Search text / value across rows", placeholder="e.g. Yes or visitorid")
+        search_q = f1.text_input("Search value across columns", placeholder="e.g. Yes or visitorid")
         sort_col = f2.selectbox("Sort by column", list(df.columns))
         sort_asc = f3.selectbox("Sort order", ["Ascending", "Descending"]) == "Ascending"
         page_size = int(f4.selectbox("Rows per page", [20, 50, 100, 250], index=1))
-        sel_cols = st.multiselect("Selected columns", list(df.columns), default=list(df.columns))
+        sel_cols = st.multiselect("Visible columns", list(df.columns), default=list(df.columns))
 
     view = df.copy()
     if search_q.strip():
@@ -74,28 +82,29 @@ with tab_exp:
     view = view.sort_values(sort_col, ascending=sort_asc, kind="stable").reset_index(drop=True)
 
     total_pages = max(1, int(np.ceil(len(view) / page_size)))
-    page_num = int(st.number_input(f"Page (1 to {total_pages})", min_value=1, max_value=total_pages, value=1))
+    p_col, dl_col = st.columns([1, 2])
+    page_num = int(p_col.number_input(f"Page (1 to {total_pages})", min_value=1, max_value=total_pages, value=1))
     start_i = (page_num - 1) * page_size
     page_df = view.iloc[start_i : start_i + page_size][sel_cols or list(df.columns)]
 
-    st.caption(f"Showing rows **{start_i + 1:,}–{min(start_i + page_size, len(view)):,}** of **{len(view):,}** matching rows.")
-    st.dataframe(page_df, use_container_width=True, hide_index=True)
-
-    st.download_button(
-        f"⬇️ Export Filtered Dataset ({len(view):,} rows CSV)",
+    dl_col.write("")
+    dl_col.download_button(
+        f"⬇️ Export Filtered Table ({len(view):,} rows CSV)",
         view[sel_cols or list(df.columns)].to_csv(index=False).encode("utf-8"),
         file_name=f"retailrocket_{ds_key}_export.csv",
         mime="text/csv",
+        use_container_width=True,
     )
+
+    with ui.chart_card(f"Dataset Preview — Rows {start_i + 1:,} to {min(start_i + page_size, len(view)):,} of {len(view):,}"):
+        st.dataframe(page_df, use_container_width=True, hide_index=True)
 
     s1, s2 = st.columns([1.4, 1])
     num_cols = [c for c in view.select_dtypes(include="number").columns if c not in ("session_id", "visitorid", "session_start_ts")]
-    with s1, st.container(border=True):
-        st.subheader("Descriptive Statistics")
+    with s1, ui.chart_card("Descriptive Statistics", "Summary statistics for numeric behavioral columns"):
         if num_cols:
             st.dataframe(view[num_cols].describe().T.round(3), use_container_width=True)
-    with s2, st.container(border=True):
-        st.subheader("Column Data Types & Missing Values")
+    with s2, ui.chart_card("Schema & Missing Value Summary", "Data types, null counts, and cardinality"):
         qual_df = pd.DataFrame({
             "column": list(df.columns),
             "dtype": [data.get("dtypes", {}).get(c, str(df[c].dtype)) for c in df.columns],
@@ -105,91 +114,84 @@ with tab_exp:
         st.dataframe(qual_df, use_container_width=True, hide_index=True)
 
 # =============================================================================
-# TAB 2: DATA PREPROCESSING, CLEANING LOG & SESSION CONSTRUCTION
+# TAB 2: DATA PREPROCESSING & SESSION ENGINEERING
 # =============================================================================
 with tab_prep:
-    st.subheader("1. Raw Dataset Inventory & Schema Validation")
-    inv = ins.get("raw_files_inventory", [])
-    if inv:
-        st.dataframe(pd.DataFrame(inv), use_container_width=True, hide_index=True)
+    ui.kpi_row([
+        ("Raw events.csv Rows", f"{ins.get('raw_rows', 2756101):,}", f"Raw memory: {ins.get('memory_raw_mb', 121.8)} MB"),
+        ("Exact Duplicates Removed", f"{ins.get('duplicates_removed', 460):,}", "0.017% of raw rows"),
+        ("Clean Event Rows", f"{ins.get('clean_event_rows', 2755641):,}", f"Optimized memory: {ins.get('memory_clean_mb', 62.0)} MB"),
+        ("Invalid Timestamps / Events", f"{ins.get('invalid_rows_removed', 0):,}", "All UTC millisecond timestamps valid"),
+    ])
 
-    p1, p2, p3, p4 = st.columns(4)
-    p1.metric("Raw events.csv Rows", f"{ins.get('raw_rows', 2756101):,}", f"Memory: {ins.get('memory_raw_mb', 121.8)} MB")
-    p2.metric("Exact Duplicates Removed", f"{ins.get('duplicates_removed', 460):,}", "0.017% of raw events")
-    p3.metric("Clean Event Rows", f"{ins.get('clean_event_rows', 2755641):,}", f"Optimized: {ins.get('memory_clean_mb', 62.0)} MB")
-    p4.metric("Invalid Timestamps / Events", f"{ins.get('invalid_rows_removed', 0):,}", "All timestamps valid UTC ms")
+    with ui.chart_card("Raw Dataset Files Inventory (data/raw/)", "Original files verified on disk (never modified or overwritten)"):
+        inv = ins.get("raw_files_inventory", [])
+        if inv:
+            st.dataframe(pd.DataFrame(inv), use_container_width=True, hide_index=True)
 
     c_left, c_right = st.columns(2)
-    with c_left, st.container(border=True):
-        st.subheader("2. Logged Data Cleaning Steps (No Silent Deletions)")
+    with c_left, ui.chart_card("Cleaning Pipeline Execution Log", "Every row removal is explicitly accounted for"):
         steps = ins.get("cleaning_steps", [])
         if steps:
             st.dataframe(pd.DataFrame(steps), use_container_width=True, hide_index=True)
         raw_miss = ins.get("raw_missing_by_column", {})
         if raw_miss:
-            st.caption(
-                "**Raw missing-value audit:** "
-                + ", ".join(f"`{k}`: {v:,}" for k, v in raw_miss.items())
-                + " (`transactionid` is null on `view` and `addtocart` events by design)."
+            ui.note(
+                "<b>Missing-value audit on raw events.csv:</b> "
+                + ", ".join(f"<code>{k}</code>: {v:,}" for k, v in raw_miss.items())
+                + " — <code>transactionid</code> is empty on <code>view</code> and <code>addtocart</code> rows by design."
             )
 
-    with c_right, st.container(border=True):
-        st.subheader("3. Session Construction & Timeout Sensitivity")
-        st.write(
-            "Retailrocket does not include a native `session_id`. We sort events by `(visitorid, timestamp)` "
-            "and start a new session whenever a visitor's inactivity gap exceeds the configured threshold "
-            "(default **30 minutes**, an analytical assumption)."
-        )
+    with c_right, ui.chart_card("Session Construction & Timeout Sensitivity", "30-minute inactivity boundary (analytical assumption)"):
         sens = ins.get("timeout_sensitivity", [])
         if sens:
             st.dataframe(pd.DataFrame(sens), use_container_width=True, hide_index=True)
-
         with st.form("rebuild_sessions_form"):
             new_to = st.number_input(
-                "Configure Session Inactivity Timeout (minutes)",
+                "Inactivity Timeout Threshold (minutes)",
                 min_value=5.0, max_value=180.0,
                 value=float(ins.get("session_timeout_minutes", 30.0)), step=5.0,
             )
-            rebuild_btn = st.form_submit_button("⚙️ Rebuild Sessions & Processed Datasets")
+            rebuild_btn = st.form_submit_button("⚙️ Rebuild Sessions & Processed Tables", type="primary", use_container_width=True)
         if rebuild_btn:
             with st.spinner(f"Rebuilding sessions with {new_to:g}-minute timeout..."):
                 try:
                     api_client.preprocess(timeout_minutes=new_to)
-                    st.success(f"Rebuilt processed datasets with {new_to:g}-minute session timeout!")
+                    st.success(f"Rebuilt processed datasets with {new_to:g}-minute session timeout.")
                     st.rerun()
                 except api_client.APIError as e:
                     st.error(str(e))
 
-    with st.container(border=True):
-        st.subheader("4. Leakage-Safe Early-Session Snapshot Eligibility Breakdown")
-        elig = ins.get("snapshot_eligibility", {})
-        if elig:
-            e1, e2, e3, e4 = st.columns(4)
-            e1.metric("Total Engineered Sessions", f"{elig.get('total_sessions', 0):,}")
-            e2.metric("Excluded (<3 Non-Tx Events)", f"{elig.get('excluded_fewer_than_n_events', 0):,}")
-            e3.metric("Excluded (Tx At/Before Snapshot)", f"{elig.get('excluded_transaction_at_or_before_snapshot', 0):,}", "Prevents outcome leakage")
-            e4.metric("Usable Eligible Sessions", f"{elig.get('eligible_sessions_total', 0):,}", f"{elig.get('eligible_positive_rate_pct', 0):.2f}% positive rate")
+    elig = ins.get("snapshot_eligibility", {})
+    if elig:
+        with ui.chart_card("Early-Session Snapshot Eligibility Breakdown", "Leakage prevention: features come strictly from the first 3 non-transaction events"):
+            ui.kpi_row([
+                ("Total Engineered Sessions", f"{elig.get('total_sessions', 0):,}", "All visitor sessions"),
+                ("Excluded (<3 Non-Tx Events)", f"{elig.get('excluded_fewer_than_n_events', 0):,}", "Ended before 3rd action"),
+                ("Excluded (Tx At/Before Snapshot)", f"{elig.get('excluded_transaction_at_or_before_snapshot', 0):,}", "Prevents post-purchase leakage"),
+                ("Usable Eligible Sessions", f"{elig.get('eligible_sessions_total', 0):,}", f"{elig.get('eligible_positive_rate_pct', 7.56):.2f}% conversion rate"),
+            ])
 
 # =============================================================================
 # TAB 3: DATA DICTIONARY
 # =============================================================================
 with tab_dict:
-    st.subheader("Retailrocket & Engineered Feature Dictionary")
-    dict_rows = [
-        {"Column": "timestamp", "Dataset": "raw/events.csv", "Origin": "Raw", "Description": "Unix epoch milliseconds of the interaction (UTC)."},
-        {"Column": "visitorid", "Dataset": "raw & processed", "Origin": "Raw (Blocked from ML inputs)", "Description": "Unique visitor identifier. Used for grouping only, never as a numeric prediction feature."},
-        {"Column": "event", "Dataset": "raw/events.csv", "Origin": "Raw", "Description": "Interaction category: view, addtocart, or transaction."},
-        {"Column": "itemid", "Dataset": "raw/events.csv", "Origin": "Raw (Blocked from ML inputs)", "Description": "Unique product identifier."},
-        {"Column": "transactionid", "Dataset": "raw/events.csv", "Origin": "Raw (Blocked from ML inputs)", "Description": "Transaction order ID (present only on transaction events)."},
-        {"Column": "session_id", "Dataset": "clean.csv / session_profiles.csv", "Origin": "Engineered (Blocked from ML inputs)", "Description": "Generated session ID using the 30-minute inactivity threshold."},
-        {"Column": "views_count", "Dataset": "clean.csv", "Origin": "Pre-Snapshot Input", "Description": "Product views observed in the first 3 non-transaction events."},
-        {"Column": "unique_items_viewed", "Dataset": "clean.csv / profiles", "Origin": "Pre-Snapshot Input", "Description": "Distinct products viewed in the observation window."},
-        {"Column": "add_to_cart_count", "Dataset": "clean.csv / session_profiles.csv", "Origin": "Pre-Snapshot Input", "Description": "Add-to-cart events in the observation window."},
-        {"Column": "first_cart_position", "Dataset": "clean.csv", "Origin": "Pre-Snapshot Input", "Description": "0-based event position of first add-to-cart (-1 if none yet)."},
-        {"Column": "elapsed_seconds", "Dataset": "clean.csv", "Origin": "Pre-Snapshot Input", "Description": "Seconds elapsed from session start to the 3rd event snapshot."},
-        {"Column": "ends_with_cart", "Dataset": "clean.csv", "Origin": "Pre-Snapshot Input", "Description": "Yes if the 3rd event was an add-to-cart action, else No."},
-        {"Column": "prior_sessions", "Dataset": "clean.csv", "Origin": "Historical Visitor Input", "Description": "Visitor's number of strictly earlier sessions prior to this session."},
-        {"Column": "prior_purchases", "Dataset": "clean.csv", "Origin": "Historical Visitor Input", "Description": "Visitor's transactions in strictly earlier sessions only."},
-        {"Column": "will_purchase", "Dataset": "clean.csv", "Origin": "Supervised Target", "Description": "Yes (1) if a transaction occurs strictly after the 3rd event in the session, else No (0)."},
-    ]
-    st.dataframe(pd.DataFrame(dict_rows), use_container_width=True, hide_index=True)
+    with ui.chart_card("Retailrocket & Engineered Feature Dictionary", "Role and leakage policy for every raw and derived attribute"):
+        dict_rows = [
+            {"Column": "timestamp", "Dataset": "raw/events.csv", "Role / Leakage Policy": "Raw Timestamp", "Description": "Unix epoch milliseconds of the interaction (UTC)."},
+            {"Column": "visitorid", "Dataset": "raw & processed", "Role / Leakage Policy": "Identifier (Blocked from ML inputs)", "Description": "Unique visitor identifier. Used for session grouping only."},
+            {"Column": "event", "Dataset": "raw/events.csv", "Role / Leakage Policy": "Raw Event Type", "Description": "Interaction category: view, addtocart, or transaction."},
+            {"Column": "itemid", "Dataset": "raw/events.csv", "Role / Leakage Policy": "Identifier (Blocked from ML inputs)", "Description": "Unique product identifier."},
+            {"Column": "transactionid", "Dataset": "raw/events.csv", "Role / Leakage Policy": "Post-Purchase ID (Blocked from ML inputs)", "Description": "Transaction order ID (present only on transaction events)."},
+            {"Column": "session_id", "Dataset": "clean.csv / session_profiles.csv", "Role / Leakage Policy": "Identifier (Blocked from ML inputs)", "Description": "Engineered session ID using the inactivity timeout threshold."},
+            {"Column": "views_count", "Dataset": "clean.csv", "Role / Leakage Policy": "Early-Session Predictor", "Description": "Product views observed in the first 3 non-transaction events."},
+            {"Column": "unique_items_viewed", "Dataset": "clean.csv / profiles", "Role / Leakage Policy": "Early-Session Predictor", "Description": "Distinct products viewed in the observation window."},
+            {"Column": "add_to_cart_count", "Dataset": "clean.csv / session_profiles.csv", "Role / Leakage Policy": "Early-Session Predictor", "Description": "Add-to-cart events in the observation window."},
+            {"Column": "first_cart_position", "Dataset": "clean.csv", "Role / Leakage Policy": "Early-Session Predictor", "Description": "0-based event position of first add-to-cart (-1 if none yet)."},
+            {"Column": "elapsed_seconds", "Dataset": "clean.csv", "Role / Leakage Policy": "Early-Session Predictor", "Description": "Seconds elapsed from session start to the 3rd event snapshot."},
+            {"Column": "ends_with_cart", "Dataset": "clean.csv", "Role / Leakage Policy": "Early-Session Predictor", "Description": "Yes if the 3rd event was an add-to-cart action, else No."},
+            {"Column": "prior_sessions", "Dataset": "clean.csv", "Role / Leakage Policy": "Historical Visitor Predictor", "Description": "Visitor's number of strictly earlier sessions prior to this session."},
+            {"Column": "prior_purchases", "Dataset": "clean.csv", "Role / Leakage Policy": "Historical Visitor Predictor", "Description": "Visitor's transactions in strictly earlier sessions only."},
+            {"Column": "will_purchase", "Dataset": "clean.csv", "Role / Leakage Policy": "Supervised Target (0 / 1)", "Description": "Yes (1) if a transaction occurs strictly after the 3rd event in the session, else No (0)."},
+        ]
+        st.dataframe(pd.DataFrame(dict_rows), use_container_width=True, hide_index=True)

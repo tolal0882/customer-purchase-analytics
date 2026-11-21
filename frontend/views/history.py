@@ -1,17 +1,25 @@
 """
-Page 6 – Prediction History: review previous prediction records persisted in SQLite,
-search, filter, sort, inspect single record details, export to CSV, and clear history
-with confirmation.
+Prediction History — Persistent SQLite prediction log with search, filtering,
+sorting, CSV export, single record inspector, and confirmation before clearing.
 """
 import pandas as pd
 import streamlit as st
 
 import api_client
+try:
+    from components import ui
+except ImportError:
+    from frontend.components import ui
 
-st.title("🕘 Prediction History")
-st.caption(
-    "Persistent log of model predictions stored locally in SQLite (`data/predictions.db`). "
-    "Predicted outcomes are kept strictly separate from actual dataset transaction records."
+ui.inject_css()
+
+ui.page_header(
+    "Prediction History Log",
+    "Persistent SQLite log (data/predictions.db) of early-session purchase predictions, kept separate from real dataset transactions.",
+    badges=[
+        ("Storage: SQLite (data/predictions.db)", "ok"),
+        ("CSV Export Enabled", "info"),
+    ],
 )
 
 try:
@@ -20,12 +28,13 @@ except api_client.APIError as e:
     api_client.show_error_and_stop(e)
 
 if not items:
-    st.info("No prediction records yet. Go to **3. Purchase Prediction** and run a prediction.")
+    ui.empty_state(
+        "No prediction records logged yet",
+        "Run a prediction on the **Purchase Prediction** page to populate the history table.",
+        "📜",
+    )
     st.stop()
 
-# =============================================================================
-# 1. BUILD HISTORY DATAFRAME & SUMMARY KPIs
-# =============================================================================
 rows = [
     {
         "prediction_id": it.get("id"),
@@ -40,18 +49,16 @@ rows = [
 ]
 df = pd.DataFrame(rows)
 
-k1, k2, k3, k4 = st.columns(4)
-k1.metric("Total Logged Predictions", f"{len(df):,}")
-k2.metric("Predicted Purchases (Yes)", f"{int((df['predicted_outcome'] == 'Yes').sum()):,}")
-k3.metric("Mean Purchase Probability", f"{df['purchase_probability_pct'].mean():.1f}%")
-k4.metric("Models Used", f"{df['model'].nunique()}")
+ui.kpi_row([
+    ("Total Logged Predictions", f"{len(df):,}", "Persisted in SQLite"),
+    ("Predicted Purchases (Yes)", f"{int((df['predicted_outcome'] == 'Yes').sum()):,}", "Class 1 predictions"),
+    ("Mean Purchase Probability", f"{df['purchase_probability_pct'].mean():.1f}%", "Across logged inferences"),
+    ("Distinct Models Used", f"{df['model'].nunique()}", "Active & historical pipelines"),
+])
 
-# =============================================================================
-# 2. SEARCH, FILTER, SORT, EXPORT & CLEAR WITH CONFIRMATION
-# =============================================================================
-with st.container(border=True):
+with ui.chart_card("Search, Filter & Sort Prediction Log"):
     c1, c2, c3, c4 = st.columns([1.4, 1, 1, 1.2])
-    search_q = c1.text_input("Search ID, model, or inputs")
+    search_q = c1.text_input("Search ID, model, or input features")
     out_filter = c2.multiselect(
         "Predicted Outcome",
         options=sorted(df["predicted_outcome"].unique()),
@@ -63,7 +70,7 @@ with st.container(border=True):
         default=sorted(df["model"].unique()),
     )
     sort_by = c4.selectbox(
-        "Sort By",
+        "Sort Order",
         ["Newest First", "Oldest First", "Probability (High → Low)", "Probability (Low → High)"],
     )
 
@@ -83,7 +90,7 @@ else:
 
 b1, b2 = st.columns(2)
 b1.download_button(
-    f"⬇️ Export Filtered History ({len(view):,} rows CSV)",
+    f"⬇️ Export Filtered Prediction History ({len(view):,} rows CSV)",
     view.to_csv(index=False).encode("utf-8"),
     file_name="prediction_history.csv",
     mime="text/csv",
@@ -94,9 +101,9 @@ if b2.button("🗑️ Clear Prediction History", use_container_width=True):
 
 if st.session_state.get("confirm_clear_history"):
     with st.container(border=True):
-        st.warning(f"Are you sure you want to permanently delete all **{len(df):,}** prediction records?")
+        st.warning(f"Confirm permanent deletion of all **{len(df):,}** logged prediction records?")
         y_col, n_col = st.columns(2)
-        if y_col.button("✅ Yes, Clear All Records", type="primary", use_container_width=True):
+        if y_col.button("✅ Yes, Delete All Records", type="primary", use_container_width=True):
             api_client.clear_history()
             st.session_state["confirm_clear_history"] = False
             st.rerun()
@@ -104,14 +111,11 @@ if st.session_state.get("confirm_clear_history"):
             st.session_state["confirm_clear_history"] = False
             st.rerun()
 
-with st.container(border=True):
+with ui.chart_card(f"Logged Prediction Records ({len(view):,} matching rows)"):
     st.dataframe(view, use_container_width=True, hide_index=True)
 
-# =============================================================================
-# 3. SINGLE RECORD DETAIL INSPECTOR
-# =============================================================================
 if not view.empty:
-    with st.expander("🔎 Inspect Single Prediction Record Details"):
+    with st.expander("🔎 Inspect Single Prediction Record Payload"):
         sel_id = st.selectbox("Select Prediction ID", view["prediction_id"].tolist())
         rec = next((it for it in items if it.get("id") == sel_id), None)
         if rec:

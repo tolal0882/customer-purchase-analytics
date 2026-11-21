@@ -1,7 +1,7 @@
 # Model Card – E-commerce Purchase Behavior Prediction
 
-- **Experiment ID:** `20261121_001601_870021`
-- **Trained:** 2026-11-21T00:16:01
+- **Experiment ID:** `20261121_075043_581de4`
+- **Trained:** 2026-11-21T07:50:43
 - **Task:** classification – predict `will_purchase` (`Yes` / `No`)
 - **Best Model:** Logistic Regression
 - **Best Parameters:** {'C': 0.1}

@@ -1,5 +1,5 @@
 {
-  "trained_at": "2026-11-21T00:16:09",
+  "trained_at": "2026-11-21T07:50:51",
   "scope": "session",
   "algorithm": "K-Means",
   "n_clusters": 4,
