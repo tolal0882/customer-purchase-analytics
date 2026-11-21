@@ -1,6 +1,6 @@
 """
-System Architecture & Project Information — Technical overview of the deployed
-ML system, anti-leakage design, and team metadata.
+System Architecture & Team Task Allocation — Technical overview of the deployed
+ML system, anti-leakage design, and the 5-member team responsibility matrix (25 tasks).
 """
 import pandas as pd
 import streamlit as st
@@ -20,12 +20,12 @@ except Exception:
     ins = {}
 
 ui.page_header(
-    "System Architecture & Methodology",
+    "System Architecture & Team Task Matrix",
     f"{config.PROJECT_TITLE} — {config.PROJECT_SUBTITLE}",
     badges=[
-        ("Frontend: Streamlit + React 18 + Tailwind", "ok"),
-        ("Backend: FastAPI + SQLite", "info"),
-        ("ML: Scikit-learn Pipelines", "neutral"),
+        ("Team Size: 5 Members (25 Tasks)", "ok"),
+        ("Frontend: Streamlit + React 18 + Tailwind", "info"),
+        ("Backend & ML: FastAPI + Scikit-learn + SQLite", "neutral"),
     ],
 )
 
@@ -36,6 +36,35 @@ ui.kpi_row([
     ("Clustered Profiles", "25,000", "Customer & Session K-Means"),
 ])
 
+# =============================================================================
+# 1. 5-MEMBER TEAM TASK ALLOCATION (5 TASKS PER MEMBER = 25 TASKS)
+# =============================================================================
+with ui.chart_card(
+    "Team Members & 25-Task Responsibility Matrix (5 Tasks per Member)",
+    "Equal workload distribution across Architecture/Backend, Data Engineering, EDA/Features, Supervised ML, and Unsupervised ML/UI",
+):
+    summary_rows = []
+    for member_info in config.TEAM_TASK_ASSIGNMENTS:
+        summary_rows.append({
+            "Team Member": member_info["member"],
+            "Primary Role": member_info["role"],
+            "Assigned Tasks": "5 Tasks",
+            "Owned Modules & Files": member_info["files"],
+        })
+    st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
+
+    cols = st.columns(2)
+    for idx, member_info in enumerate(config.TEAM_TASK_ASSIGNMENTS):
+        target_col = cols[idx % 2] if idx < 4 else st
+        with target_col:
+            with st.expander(f"👤 {member_info['member']} — {member_info['role']}", expanded=True):
+                st.caption(f"**Owned Files:** `{member_info['files']}`")
+                for t in member_info["tasks"]:
+                    st.markdown(f"- {t}")
+
+# =============================================================================
+# 2. SUPERVISED & UNSUPERVISED ML METHODOLOGY
+# =============================================================================
 c1, c2 = st.columns(2)
 with c1, ui.chart_card("Supervised Purchase Prediction Pipeline", "Early-session conversion classification (ml/train.py & ml/features.py)"):
     st.markdown(
@@ -59,21 +88,10 @@ with c2, ui.chart_card("Unsupervised Behavioral Segmentation Pipeline", "Custome
 
 with ui.chart_card("End-to-End CRISP-DM System Architecture", "Layered full-stack separation between UI, REST API, ML service, and storage"):
     arch_df = pd.DataFrame([
-        {"Layer": "1. Data Engineering", "Module": "ml/data/make_dataset.py", "Responsibility": "Validates raw events.csv, removes 460 exact duplicates, engineers 30-min sessions, and builds clean.csv & behavioral profiles."},
-        {"Layer": "2. Feature Pipeline", "Module": "ml/features.py", "Responsibility": "Scikit-learn FunctionTransformer + ColumnTransformer fitted strictly on training folds."},
-        {"Layer": "3. Supervised & Unsupervised ML", "Module": "ml/train.py & ml/clustering.py", "Responsibility": "Trains 4 classifiers + K-Means (K=2..8) and persists experiments to models/."},
-        {"Layer": "4. Service & SQLite Persistence", "Module": "ml/service.py & data/predictions.db", "Responsibility": "Unified inference, local feature-perturbation explanation, and persistent SQLite prediction log."},
-        {"Layer": "5. REST API Backend", "Module": "backend_fastapi/main.py", "Responsibility": "FastAPI endpoints (/api/health, /schema, /data, /preprocess, /train, /predict, /predictions, /segments, /insights)."},
-        {"Layer": "6. Hybrid Web Frontend", "Module": "frontend/app.py & frontend/components/", "Responsibility": "Streamlit + compiled React/TypeScript/Tailwind interactive components (PredictionForm, ClusterExplorer, ModelCompare)."},
+        {"Layer": "1. Data Engineering", "Owner": "Seng Ranut", "Module": "ml/data/make_dataset.py", "Responsibility": "Validates raw events.csv, removes 460 exact duplicates, engineers 30-min sessions, and builds clean.csv & behavioral profiles."},
+        {"Layer": "2. Feature Pipeline & EDA", "Owner": "Phat Vandet", "Module": "ml/features.py & notebooks/01_eda.ipynb", "Responsibility": "Scikit-learn FunctionTransformer + ColumnTransformer fitted strictly on training folds + 6-part EDA."},
+        {"Layer": "3. Supervised Classification", "Owner": "Vy Soksamnang", "Module": "ml/train.py & ml/evaluate.py", "Responsibility": "Trains 4 classifiers with TrainingFoldResampler, evaluates ROC/PR/F1, and computes local feature perturbations."},
+        {"Layer": "4. Unsupervised Clustering & React UI", "Owner": "Yos Sak", "Module": "ml/clustering.py & frontend/components/", "Responsibility": "Fits Customer & Session K-Means (K=2..8) + PCA and bridges React 18 + Tailwind components."},
+        {"Layer": "5. Service, FastAPI & Cloud Deployment", "Owner": "Long Tola (Leader)", "Module": "backend_fastapi/main.py & ml/service.py", "Responsibility": "FastAPI REST endpoints, SQLite prediction history, 13-test pytest suite, and GitHub / Streamlit Cloud deployment."},
     ])
     st.dataframe(arch_df, use_container_width=True, hide_index=True)
-
-d1, d2 = st.columns(2)
-with d1, ui.chart_card("Dataset Reference"):
-    st.write(config.DATA_SOURCE)
-    st.markdown("- **Source:** [Kaggle — Retailrocket Recommender System Dataset](https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset)")
-
-with d2, ui.chart_card("Project Team"):
-    st.write(f"**Course:** {config.CLASS_NAME}")
-    for member in config.TEAM_MEMBERS:
-        st.markdown(f"- {member}")

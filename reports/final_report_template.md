@@ -1,6 +1,6 @@
 # E-commerce Purchase Behavior Prediction and Customer Segmentation Using Machine Learning – Final Report
 
-**Class:** Y3S1 · **Team:** Tola Long (Team Leader), Team Member 2, Team Member 3, Team Member 4 · **Date:** November 2026
+**Class:** Y3S1 · **Team:** Long Tola (Team Leader), Seng Ranut, Phat Vandet, Vy Soksamnang, Yos Sak · **Date:** November 2026
 
 ---
 
