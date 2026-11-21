@@ -3,7 +3,13 @@ Streamlit + React Frontend Entrypoint.
 Run from the project root:
 
     streamlit run frontend/app.py
+
+Layout:
+  - Top app bar  : brand, breadcrumb (Category > Page), live system status, quick-link navigation row
+  - Sidebar      : categorized navigation (Overview / Data / Machine Learning / Records & System)
+                   + live Dataset / Model / Backend status panel
 """
+import importlib
 import sys
 from pathlib import Path
 
@@ -15,16 +21,9 @@ for p in (str(FRONTEND_DIR), str(ROOT_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-# Force reload of config and service modules on Streamlit Cloud hot-reload
-import importlib
-try:
-    import ml.service as _ml_service
-    importlib.reload(_ml_service)
-except Exception:
-    pass
 import api_client
-importlib.reload(api_client)
 import config
+importlib.reload(api_client)
 importlib.reload(config)
 try:
     from components import ui
@@ -32,7 +31,7 @@ except ImportError:
     from frontend.components import ui
 
 # =============================================================================
-# 1. PAGE CONFIGURATION & DESIGN SYSTEM CSS
+# 1. PAGE CONFIGURATION & DESIGN SYSTEM
 # =============================================================================
 st.set_page_config(
     page_title="Retail Purchase Analytics",
@@ -43,51 +42,83 @@ st.set_page_config(
 ui.inject_css()
 
 # =============================================================================
-# 2. NAVIGATION REGISTRY (CLEAN SaaS SIDEBAR LABELS, ZERO NUMBERED GUIDE TITLES)
+# 2. CATEGORIZED NAVIGATION
 # =============================================================================
 VIEWS_DIR = FRONTEND_DIR / "views"
-PAGE_SPECS = [
-    (VIEWS_DIR / "home.py", "Dashboard", "📊", True),
-    (VIEWS_DIR / "data_explorer.py", "Data & Preprocessing", "🗂️", False),
-    (VIEWS_DIR / "insights.py", "Exploratory Analysis", "🔍", False),
-    (VIEWS_DIR / "segmentation.py", "Customer Segmentation", "👥", False),
-    (VIEWS_DIR / "model_performance.py", "Model Training & Eval", "🧠", False),
-    (VIEWS_DIR / "prediction.py", "Purchase Prediction", "🎯", False),
-    (VIEWS_DIR / "history.py", "Prediction History", "📜", False),
-    (VIEWS_DIR / "about.py", "System Architecture", "ℹ️", False),
+
+
+def _page(file: str, title: str, icon: str, default: bool = False):
+    return st.Page(str(VIEWS_DIR / file), title=title, icon=icon, default=default)
+
+
+pg_dashboard = _page("home.py", "Dashboard", "📊", default=True)
+pg_data = _page("data_explorer.py", "Data & Preprocessing", "🗂️")
+pg_eda = _page("insights.py", "Exploratory Analysis", "🔍")
+pg_segments = _page("segmentation.py", "Customer Segmentation", "👥")
+pg_models = _page("model_performance.py", "Model Training & Evaluation", "🧠")
+pg_predict = _page("prediction.py", "Purchase Prediction", "🎯")
+pg_history = _page("history.py", "Prediction History", "📜")
+pg_system = _page("about.py", "System Overview", "ℹ️")
+
+SECTIONS = {
+    "Overview": [pg_dashboard],
+    "Data": [pg_data, pg_eda],
+    "Machine Learning": [pg_segments, pg_models, pg_predict],
+    "Records & System": [pg_history, pg_system],
+}
+nav = st.navigation(SECTIONS, position="sidebar")
+
+# Short labels for the top quick-link row
+QUICK_LINKS = [
+    (pg_dashboard, "Dashboard", "📊"),
+    (pg_data, "Data", "🗂️"),
+    (pg_eda, "Analysis", "🔍"),
+    (pg_segments, "Segments", "👥"),
+    (pg_models, "Models", "🧠"),
+    (pg_predict, "Predict", "🎯"),
+    (pg_history, "History", "📜"),
+    (pg_system, "System", "ℹ️"),
 ]
 
-pages_with_meta = []
-st_pages = []
-for path, title, icon, is_default in PAGE_SPECS:
-    p_obj = st.Page(str(path), title=title, icon=icon, default=is_default)
-    st_pages.append(p_obj)
-    pages_with_meta.append((p_obj, title, icon))
+current_section = next(
+    (name for name, pages in SECTIONS.items() if any(pg.title == nav.title for pg in pages)),
+    "Overview",
+)
 
-# Hide Streamlit's default unstyled page list and render our branded SaaS sidebar
-nav = st.navigation(st_pages, position="hidden")
-
+# =============================================================================
+# 3. LIVE SYSTEM STATUS
+# =============================================================================
 try:
     h_info = api_client.health()
     ins = api_client.get_insights()
     test_m = ins.get("test_metrics", {})
-    status_info = {
-        "dataset_label": "Retailrocket Loaded",
-        "dataset_sub": f"{ins.get('clean_event_rows', 2755641):,} events · {ins.get('total_sessions', 1761675):,} sessions",
-        "model_label": ins.get("best_model") or "Classifier Active",
-        "model_sub": f"ROC-AUC {test_m.get('roc_auc', 0.848):.3f} · K-Means Sil {ins.get('clustering_silhouette', 0.342):.3f}",
-        "api_label": f"Connected ({h_info.get('backend', 'fastapi')})",
-        "api_kind": "ok",
+    api_label = "FastAPI online" if "fastapi" in str(h_info.get("backend", "")).lower() else "Direct service mode"
+    status = {
+        "dataset": f"{ins.get('clean_event_rows', 2755641):,} events · {ins.get('total_sessions', 1761675):,} sessions",
+        "model": f"{ins.get('best_model') or 'Classifier'} · ROC-AUC {test_m.get('roc_auc', 0):.3f}",
+        "backend": api_label,
+        "pills": [
+            (ins.get("best_model") or "Classifier ready", "ok"),
+            (api_label, "info"),
+        ],
     }
 except Exception:
-    status_info = {
-        "dataset_label": "Retailrocket Ready",
-        "dataset_sub": "data/processed/clean.csv",
-        "model_label": "Pipeline Ready",
-        "model_sub": "Supervised + K-Means",
-        "api_label": "Direct Service Mode",
-        "api_kind": "info",
+    status = {
+        "dataset": "Retailrocket processed data",
+        "model": "Pipeline ready",
+        "backend": "Direct service mode",
+        "pills": [("Pipeline ready", "ok"), ("Direct service mode", "info")],
     }
 
-ui.sidebar(pages_with_meta, status_info)
+# =============================================================================
+# 4. TOP APP BAR + SIDEBAR STATUS PANEL
+# =============================================================================
+ui.top_bar(current_section, nav.title, status["pills"])
+cols = st.columns(len(QUICK_LINKS))
+for col, (page_obj, label, icon) in zip(cols, QUICK_LINKS):
+    with col:
+        st.page_link(page_obj, label=label, icon=icon, use_container_width=True)
+
+ui.sidebar_status(status["dataset"], status["model"], status["backend"])
+
 nav.run()

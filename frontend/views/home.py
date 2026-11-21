@@ -23,7 +23,6 @@ ui.page_header(
     "Executive Analytics Dashboard",
     "Real KPIs, conversion funnel, event trends, and behavioral segments computed from 2,755,641 cleaned Retailrocket events.",
     badges=[
-        ("👤 Handled by: Phat Vandet", "ok"),
         ("Dataset: Retailrocket (May–Sep 2015)", "info"),
         (f"Classifier: {ins.get('best_model', 'Logistic Regression')} (AUC {test_m.get('roc_auc', 0.848):.3f})", "neutral"),
     ],

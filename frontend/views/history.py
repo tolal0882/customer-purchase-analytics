@@ -17,7 +17,6 @@ ui.page_header(
     "Prediction History Log",
     "Persistent SQLite log (data/predictions.db) of early-session purchase predictions, kept separate from real dataset transactions.",
     badges=[
-        ("👤 Handled by: Long Tola (Team Leader)", "ok"),
         ("Storage: SQLite (data/predictions.db)", "info"),
         ("CSV Export Enabled", "neutral"),
     ],

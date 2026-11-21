@@ -126,6 +126,53 @@ div[data-testid="stMetric"] {{
 
 button[kind="primary"] {{ background:{C['primary']} !important; border-color:{C['primary']} !important; border-radius:10px !important; font-weight:600 !important; }}
 button[kind="primary"]:hover {{ background:{C['forest']} !important; border-color:{C['forest']} !important; }}
+
+/* Native categorized sidebar navigation */
+section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::before {{
+    content: "Retail Analytics"; display:block; font-weight:700; font-size:1.1rem; color:#fff;
+    padding: 1.1rem 1rem .4rem; letter-spacing:.01em;
+}}
+section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::after {{
+    content: "Purchase prediction & segmentation"; display:block; font-size:.72rem; color:#BFD8C8;
+    padding: 0 1rem .9rem; border-bottom:1px solid rgba(255,255,255,.12); margin-bottom:.4rem;
+}}
+section[data-testid="stSidebar"] [data-testid="stSidebarNavSeparator"],
+section[data-testid="stSidebar"] [data-testid="stSidebarNavItems"] > div > span {{
+    text-transform: uppercase; letter-spacing:.08em; font-size:.68rem !important; font-weight:700 !important;
+    color:#A7C957 !important; opacity:1 !important;
+}}
+section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"] {{
+    border-radius:10px; margin:1px 6px; transition: background .15s ease;
+}}
+section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"]:hover {{ background: rgba(255,255,255,.09); }}
+section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"][aria-current="page"] {{
+    background:{C['primary']} !important; font-weight:600; box-shadow: inset 3px 0 0 {C['accent']};
+}}
+
+/* Top app bar */
+.topbar {{
+    display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;
+    background:#fff; border:1px solid {C['border']}; border-radius:14px; padding:.65rem 1rem;
+    margin-bottom:.6rem; box-shadow:0 1px 3px rgba(21,62,45,.05);
+}}
+.topbar .tb-left {{ display:flex; align-items:center; gap:.75rem; }}
+.topbar .logo {{ background:{C['forest']}; color:{C['accent']}; width:36px; height:36px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center; font-weight:800; }}
+.topbar .tb-brand {{ font-weight:700; color:{C['forest']}; line-height:1.1; }}
+.topbar .tb-crumb {{ font-size:.78rem; color:{C['muted']}; }}
+.topbar .tb-crumb b {{ color:{C['text']}; }}
+.topbar .tb-right {{ display:flex; gap:.4rem; flex-wrap:wrap; }}
+
+/* Top quick-link row (main area page links) */
+[data-testid="stMain"] a[data-testid="stPageLink-NavLink"] {{
+    justify-content:center; border:1px solid {C['border']}; border-radius:10px; background:#fff;
+    padding:.35rem .5rem; font-size:.85rem; color:{C['forest']};
+}}
+[data-testid="stMain"] a[data-testid="stPageLink-NavLink"]:hover {{ background:#EEF5EF; }}
+[data-testid="stMain"] a[data-testid="stPageLink-NavLink"][aria-current="page"] {{
+    background:{C['primary']}; color:#fff; border-color:{C['primary']}; font-weight:600;
+}}
+[data-testid="stMain"] a[data-testid="stPageLink-NavLink"][aria-current="page"] * {{ color:#fff !important; }}
 </style>
 """
 
@@ -245,5 +292,28 @@ def sidebar(pages_list: list[tuple[object, str, str]], status_info: dict) -> Non
             f'<div style="height:.45rem"></div>'
             f'<b>Backend Service</b><br>{api_badge}'
             f'</div>',
+            unsafe_allow_html=True,
+        )
+
+
+def top_bar(section: str, title: str, pills: list[tuple[str, str]] | None = None) -> None:
+    """Top application bar: brand, breadcrumb (Category > Page) and live status pills."""
+    p = "".join(badge(t, k) for t, k in (pills or []))
+    st.markdown(
+        f'<div class="topbar"><div class="tb-left"><div class="logo">R</div>'
+        f'<div><div class="tb-brand">Retail Analytics</div>'
+        f'<div class="tb-crumb">{esc(section)} &rsaquo; <b>{esc(title)}</b></div></div></div>'
+        f'<div class="tb-right">{p}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def sidebar_status(dataset: str, model: str, backend: str) -> None:
+    """Live Dataset / Model / Backend status panel at the bottom of the sidebar."""
+    with st.sidebar:
+        st.markdown(
+            f'<div class="side-status"><b>Dataset</b><br><span style="opacity:.85">{esc(dataset)}</span>'
+            f'<div style="height:.45rem"></div><b>Active model</b><br><span style="opacity:.85">{esc(model)}</span>'
+            f'<div style="height:.45rem"></div><b>Backend</b><br><span style="opacity:.85">{esc(backend)}</span></div>',
             unsafe_allow_html=True,
         )

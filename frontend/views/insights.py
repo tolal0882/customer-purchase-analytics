@@ -25,7 +25,6 @@ ui.page_header(
     "Exploratory Data Analysis & Behavioral Insights",
     "Event, visitor, session, purchase conversion, and product hierarchy analysis across the processed Retailrocket dataset.",
     badges=[
-        ("👤 Handled by: Phat Vandet", "ok"),
         (f"Visitors: {ins.get('unique_visitors', 1407580):,}", "info"),
         (f"Sessions: {ins.get('total_sessions', 1761675):,}", "neutral"),
     ],

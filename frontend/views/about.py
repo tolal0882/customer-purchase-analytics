@@ -1,6 +1,6 @@
 """
-System Architecture & Team Task Allocation — Technical overview of the deployed
-ML system, anti-leakage design, and the 5-member team responsibility matrix (25 tasks).
+System Overview — what the system does, how the ML pipelines work, how the
+layers fit together, and the API surface. (Team/work allocation lives in docs/, not in the app.)
 """
 import pandas as pd
 import streamlit as st
@@ -20,89 +20,81 @@ except Exception:
     ins = {}
 
 ui.page_header(
-    "System Architecture & Team Task Matrix",
-    f"{config.PROJECT_TITLE} — {config.PROJECT_SUBTITLE}",
+    "System Overview",
+    "How the platform turns raw clickstream events into purchase predictions and customer segments.",
     badges=[
-        ("👤 Handled by: Long Tola (Team Leader)", "ok"),
-        ("Team Size: 5 Members (25 Tasks)", "info"),
-        ("Backend & ML: FastAPI + Scikit-learn + SQLite", "neutral"),
+        ("Streamlit + React", "ok"),
+        ("FastAPI + SQLite", "info"),
+        ("Scikit-learn", "neutral"),
     ],
 )
 
 ui.kpi_row([
-    ("Raw Clickstream Events", f"{ins.get('raw_rows', 2756101):,}", "data/raw/events.csv"),
-    ("Engineered Sessions", f"{ins.get('total_sessions', 1761675):,}", "30-min inactivity threshold"),
-    ("Supervised Snapshots", "30,000", "First 3 non-transaction events"),
-    ("Clustered Profiles", "25,000", "Customer & Session K-Means"),
+    ("Raw clickstream events", f"{ins.get('raw_rows', 2756101):,}", "Retailrocket events.csv"),
+    ("Engineered sessions", f"{ins.get('total_sessions', 1761675):,}", f"{ins.get('session_timeout_minutes', 30):g}-min inactivity timeout"),
+    ("Prediction snapshots", "30,000", "First 3 non-transaction events"),
+    ("Clustered profiles", "25,000", "Customers and sessions"),
 ])
 
-# =============================================================================
-# 0. UI PAGE & FEATURE OWNERSHIP MAP (WHICH MEMBER HANDLES EACH UI FEATURE)
-# =============================================================================
-with ui.chart_card(
-    "UI Feature & Page Ownership Map (Who Handles Each Screen on the App)",
-    "Every sidebar feature/page in this web application is visibly badged with its responsible team member",
-):
-    st.dataframe(pd.DataFrame(config.UI_PAGE_OWNERS), use_container_width=True, hide_index=True)
-
-# =============================================================================
-# 1. 5-MEMBER TEAM TASK ALLOCATION (5 TASKS PER MEMBER = 25 TASKS)
-# =============================================================================
-with ui.chart_card(
-    "Team Members & 25-Task Responsibility Matrix (5 Tasks per Member)",
-    "Equal workload distribution across Architecture/Backend, Data Engineering, EDA/Features, Supervised ML, and Unsupervised ML/UI",
-):
-    summary_rows = []
-    for member_info in config.TEAM_TASK_ASSIGNMENTS:
-        summary_rows.append({
-            "Team Member": member_info["member"],
-            "UI Features / Pages Handled": member_info.get("ui_features", "—"),
-            "Primary Role": member_info["role"],
-            "Assigned Tasks": "5 Tasks",
-            "Owned Modules & Files": member_info["files"],
-        })
-    st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
-
-    cols = st.columns(2)
-    for idx, member_info in enumerate(config.TEAM_TASK_ASSIGNMENTS):
-        target_col = cols[idx % 2] if idx < 4 else st.container()
-        with target_col:
-            with st.expander(f"👤 {member_info['member']} — {member_info['role']}", expanded=True):
-                st.markdown(f"**🖥️ UI Features Handled:** `{member_info.get('ui_features', '—')}`")
-                st.caption(f"**Owned Files:** `{member_info['files']}`")
-                for t in member_info["tasks"]:
-                    st.markdown(f"- {t}")
-
-# =============================================================================
-# 2. SUPERVISED & UNSUPERVISED ML METHODOLOGY
-# =============================================================================
-c1, c2 = st.columns(2)
-with c1, ui.chart_card("Supervised Purchase Prediction Pipeline", "Early-session conversion classification (ml/train.py & ml/features.py)"):
+with ui.chart_card("What the system does", "Two machine-learning components on one data foundation"):
     st.markdown(
         """
-        - **Prediction Target:** `will_purchase` (`Yes` / `No`) — whether a transaction occurs **strictly after** the first 3 non-transaction events in the session.
-        - **Leakage Prevention:** Identifiers (`visitorid`, `session_id`, `itemid`, `transactionid`) and post-snapshot counts are blocked from model inputs.
-        - **In-Pipeline Feature Engineering:** `cart_to_view_ratio`, `cart_interaction_ratio`, `has_early_cart`, `item_focus_ratio`, `avg_seconds_per_action`, `is_returning_visitor`, and `historical_buy_rate`.
-        - **Candidate Classifiers:** Logistic Regression, Decision Tree, Random Forest, and Gradient Boosting evaluated with cross-validation and `TrainingFoldResampler`.
+        1. **Purchase prediction (supervised).** From the first three non-transaction actions of a shopping session
+           (plus earlier history of the visitor) it estimates the probability that the session ends in a purchase.
+        2. **Customer & session segmentation (unsupervised).** K-Means groups visitors and sessions by behavior
+           and describes each group with a data-derived profile and a recommended action.
         """
     )
 
-with c2, ui.chart_card("Unsupervised Behavioral Segmentation Pipeline", "Customer & session K-Means clustering (ml/clustering.py)"):
+c1, c2 = st.columns(2)
+with c1, ui.chart_card("Purchase prediction pipeline", "ml/features.py · ml/train.py · ml/evaluate.py"):
+    st.markdown(
+        """
+        - **Target:** `will_purchase` — a transaction occurs strictly after the third event of the session.
+        - **Leakage prevention:** identifiers and post-snapshot information never reach the model; imputing, scaling and encoding are fitted on training folds only.
+        - **Engineered features:** cart-to-view ratio, item focus ratio, average seconds per action, returning-visitor flag, historical buy rate.
+        - **Models:** Logistic Regression, Decision Tree, Random Forest, Gradient Boosting; chronological or stratified split; class weighting and in-fold resampling; adjustable decision threshold.
+        - **Evaluation:** Accuracy, Precision, Recall, F1, ROC-AUC, PR-AUC, confusion matrix, ROC / PR curves, feature importance.
+        """
+    )
+
+with c2, ui.chart_card("Segmentation pipeline", "ml/clustering.py"):
     st.markdown(
         r"""
-        - **Dual Scope:** Supports both **Customer-Level Profiles** (`visitorid`) and **Session-Level Profiles** (`session_id`).
-        - **Transformation Pipeline:** Skewed count/duration features undergo `np.log1p` transformation followed by `StandardScaler`, `RobustScaler`, or `MinMaxScaler`.
-        - **Cluster Selection & Projection:** Evaluated across `K = 2..8` using **Within-Cluster Inertia (Elbow Method)**, **Silhouette Score**, and **Davies–Bouldin Index**, projected onto 2-D **PCA**.
-        - **Data-Driven Personas:** Segment names and z-score bars are computed dynamically from cluster centroids.
+        - **Scopes:** customer-level (one row per visitor) and session-level (one row per session).
+        - **Preprocessing:** `log1p` for skewed counts and durations, then Standard / Robust / MinMax scaling.
+        - **Model selection:** K from 2 to 8 compared with the Elbow method, Silhouette score and Davies–Bouldin index; 2-D PCA projection.
+        - **Profiles:** segment names and z-score bars are derived from cluster centroids; purchase rate is compared *after* clustering.
         """
     )
 
-with ui.chart_card("End-to-End CRISP-DM System Architecture", "Layered full-stack separation between UI, REST API, ML service, and storage"):
+with ui.chart_card("Architecture", "UI, API, ML service and storage are separated"):
     arch_df = pd.DataFrame([
-        {"Layer": "1. Data Engineering", "Owner": "Seng Ranut", "Module": "ml/data/make_dataset.py", "Responsibility": "Validates raw events.csv, removes 460 exact duplicates, engineers 30-min sessions, and builds clean.csv & behavioral profiles."},
-        {"Layer": "2. Feature Pipeline & EDA", "Owner": "Phat Vandet", "Module": "ml/features.py & notebooks/01_eda.ipynb", "Responsibility": "Scikit-learn FunctionTransformer + ColumnTransformer fitted strictly on training folds + 6-part EDA."},
-        {"Layer": "3. Supervised Classification", "Owner": "Vy Soksamnang", "Module": "ml/train.py & ml/evaluate.py", "Responsibility": "Trains 4 classifiers with TrainingFoldResampler, evaluates ROC/PR/F1, and computes local feature perturbations."},
-        {"Layer": "4. Unsupervised Clustering & React UI", "Owner": "Yos Sak", "Module": "ml/clustering.py & frontend/components/", "Responsibility": "Fits Customer & Session K-Means (K=2..8) + PCA and bridges React 18 + Tailwind components."},
-        {"Layer": "5. Service, FastAPI & Cloud Deployment", "Owner": "Long Tola (Leader)", "Module": "backend_fastapi/main.py & ml/service.py", "Responsibility": "FastAPI REST endpoints, SQLite prediction history, 13-test pytest suite, and GitHub / Streamlit Cloud deployment."},
+        {"Layer": "Data preparation", "Module": "ml/data/make_dataset.py", "Responsibility": "Validate raw events, remove duplicates, build sessions, snapshots and profiles."},
+        {"Layer": "Features", "Module": "ml/features.py", "Responsibility": "In-pipeline feature engineering and preprocessing."},
+        {"Layer": "Modelling", "Module": "ml/train.py, ml/clustering.py", "Responsibility": "Train and evaluate classifiers; fit K-Means; persist models and experiments."},
+        {"Layer": "Service", "Module": "ml/service.py", "Responsibility": "Inference, explanations, experiment registry, SQLite prediction history."},
+        {"Layer": "REST API", "Module": "backend_fastapi/main.py", "Responsibility": "HTTP endpoints for data, training, prediction, segmentation and insights."},
+        {"Layer": "Web app", "Module": "frontend/", "Responsibility": "Streamlit pages with embedded React + Tailwind components."},
     ])
     st.dataframe(arch_df, use_container_width=True, hide_index=True)
+
+e1, e2 = st.columns(2)
+with e1, ui.chart_card("REST API endpoints", "Served by FastAPI; the web app falls back to direct calls when the API is not running"):
+    api_df = pd.DataFrame([
+        {"Method": "GET", "Path": "/api/health", "Purpose": "Service status"},
+        {"Method": "GET", "Path": "/api/schema", "Purpose": "Model input schema"},
+        {"Method": "GET", "Path": "/api/data", "Purpose": "Browse datasets"},
+        {"Method": "POST", "Path": "/api/preprocess", "Purpose": "Rebuild sessions with a timeout"},
+        {"Method": "POST", "Path": "/api/train", "Purpose": "Train and register a model"},
+        {"Method": "POST", "Path": "/api/predict", "Purpose": "Purchase probability"},
+        {"Method": "GET/DELETE", "Path": "/api/predictions", "Purpose": "Prediction history"},
+        {"Method": "GET/POST", "Path": "/api/segments", "Purpose": "Segmentation results and refit"},
+        {"Method": "GET", "Path": "/api/insights", "Purpose": "Dashboard and analysis aggregates"},
+    ])
+    st.dataframe(api_df, use_container_width=True, hide_index=True)
+
+with e2, ui.chart_card("Dataset"):
+    st.write(config.DATA_SOURCE)
+    st.markdown("- **Source:** [Kaggle — Retailrocket Recommender System Dataset](https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset)")
+    st.markdown("- **Note:** Retailrocket logs only `view`, `addtocart` and `transaction`; there is no remove-from-cart event.")

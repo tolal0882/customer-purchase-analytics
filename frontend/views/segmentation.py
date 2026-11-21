@@ -19,7 +19,6 @@ ui.page_header(
     "Customer & Session Segmentation",
     "K-Means behavioral clustering on customer profiles and session profiles with Elbow, Silhouette, 2-D PCA, and data-derived z-score personas.",
     badges=[
-        ("👤 Handled by: Yos Sak", "ok"),
         ("Algorithm: K-Means (Customer & Session)", "info"),
         ("Preprocessing: log1p + Scaler", "neutral"),
     ],

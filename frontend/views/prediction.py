@@ -25,7 +25,6 @@ ui.page_header(
     "Purchase Behavior Prediction",
     "Estimate early-session purchase conversion likelihood from the first 3 non-transaction interactions using a saved classification pipeline.",
     badges=[
-        ("👤 Handled by: Vy Soksamnang & Yos Sak", "ok"),
         (f"Active Model: {report.get('best_model', 'Logistic Regression')}", "info"),
         (f"Threshold: {report.get('training_config', {}).get('threshold', 0.5):.2f}", "neutral"),
     ],
