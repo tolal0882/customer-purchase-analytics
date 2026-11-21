@@ -130,11 +130,8 @@ button[kind="primary"]:hover {{ background:{C['forest']} !important; border-colo
 /* Native categorized sidebar navigation */
 section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::before {{
     content: "Retail Analytics"; display:block; font-weight:700; font-size:1.1rem; color:#fff;
-    padding: 1.1rem 1rem .4rem; letter-spacing:.01em;
-}}
-section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::after {{
-    content: "Purchase prediction & segmentation"; display:block; font-size:.72rem; color:#BFD8C8;
-    padding: 0 1rem .9rem; border-bottom:1px solid rgba(255,255,255,.12); margin-bottom:.4rem;
+    padding: .9rem 0 .8rem; margin-bottom:.4rem; letter-spacing:.01em;
+    border-bottom:1px solid rgba(255,255,255,.12);
 }}
 section[data-testid="stSidebar"] [data-testid="stSidebarNavSeparator"],
 section[data-testid="stSidebar"] [data-testid="stSidebarNavItems"] > div > span {{
@@ -156,8 +153,8 @@ section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"][aria-current=
     background:#fff; border:1px solid {C['border']}; border-radius:14px; padding:0 1rem;
     box-shadow:0 2px 8px rgba(21,62,45,.10);
 }}
-/* When the sidebar is open, start the bar to the right of it */
-body:has(section[data-testid="stSidebar"][aria-expanded="true"]) .topbar {{ left: 21.6rem; }}
+/* When the sidebar is open (300px wide), start the bar to the right of it */
+body:has(section[data-testid="stSidebar"][data-collapsed="false"]) .topbar {{ left: 316px; }}
 .topbar .tb-title {{ font-size:1.1rem; font-weight:700; color:{C['forest']}; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
 .topbar .tb-ico {{ width:34px; height:34px; border-radius:10px; background:{C['forest']}; color:{C['accent']};
     display:flex; align-items:center; justify-content:center; font-size:1.05rem; flex-shrink:0; }}
