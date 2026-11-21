@@ -29,6 +29,8 @@ try:
     from components import ui
 except ImportError:
     from frontend.components import ui
+# Streamlit keeps imported submodules cached between deploys; reload so new UI helpers are picked up
+importlib.reload(ui)
 
 # =============================================================================
 # 1. PAGE CONFIGURATION & DESIGN SYSTEM
