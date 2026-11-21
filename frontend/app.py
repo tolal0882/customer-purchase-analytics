@@ -15,7 +15,15 @@ for p in (str(FRONTEND_DIR), str(ROOT_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
+# Clear any cached module references on hot reload
+import importlib
+try:
+    import ml.service as _ml_service
+    importlib.reload(_ml_service)
+except Exception:
+    pass
 import api_client
+importlib.reload(api_client)
 import config
 try:
     from components import ui
