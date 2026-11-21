@@ -342,7 +342,11 @@ def predict_segment(customer_features: dict) -> dict:
     """Assign a single customer behavior dictionary to its nearest K-Means segment."""
     if not config.CLUSTERING_MODEL_PATH.exists():
         run(verbose=False)
-    bundle = joblib.load(config.CLUSTERING_MODEL_PATH)
+    try:
+        bundle = joblib.load(config.CLUSTERING_MODEL_PATH)
+    except Exception:
+        run(verbose=False)
+        bundle = joblib.load(config.CLUSTERING_MODEL_PATH)
     feats = bundle["features"]
     row = pd.DataFrame([{f: float(customer_features.get(f, 0.0)) for f in feats}])
     X_imp = bundle["imputer"].transform(row)
