@@ -1,13 +1,16 @@
 """
-Compatibility wrapper so any cloud deployment configured with `frontend/app.py`
-as the entrypoint runs the root `streamlit_app.py` seamlessly.
+Streamlit Community Cloud Entrypoint (`frontend/app.py`):
+Directly configures the 6-page navigation and executes `streamlit_app.py` logic.
 """
-from pathlib import Path
-import runpy
+from __future__ import annotations
+
 import sys
+from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-runpy.run_path(str(ROOT_DIR / "streamlit_app.py"), run_name="__main__")
+from streamlit_app import main
+
+main()

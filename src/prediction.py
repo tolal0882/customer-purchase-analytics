@@ -16,6 +16,7 @@ import pandas as pd
 from src import data_loader, data_validation, model_manager, preprocessing
 
 HISTORY_PATH = data_loader.PROCESSED_DIR / "prediction_history.json"
+_MEM_HISTORY: list[dict] = []
 
 
 def validate_prediction_inputs(input_values: dict, required_features: list[str]) -> list[str]:
@@ -108,8 +109,7 @@ def predict_session(input_values: dict, model_id: str | None = None) -> dict:
 
 
 def append_prediction_history(record: dict) -> None:
-    """Persist prediction record locally in data/processed/prediction_history.json."""
-    data_loader.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    """Persist prediction record locally in data/processed/prediction_history.json (with memory fallback)."""
     history = load_prediction_history()
     entry = {
         "prediction_id": len(history) + 1,
@@ -123,18 +123,34 @@ def append_prediction_history(record: dict) -> None:
         **record["inputs"],
     }
     history.insert(0, entry)
-    HISTORY_PATH.write_text(json.dumps(history[:250], indent=2, default=str), encoding="utf-8")
+    history = history[:250]
+    _MEM_HISTORY.clear()
+    _MEM_HISTORY.extend(history)
+    try:
+        data_loader.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+        HISTORY_PATH.write_text(json.dumps(history, indent=2, default=str), encoding="utf-8")
+    except Exception:
+        pass
 
 
 def load_prediction_history() -> list[dict]:
+    if _MEM_HISTORY:
+        return list(_MEM_HISTORY)
     if not HISTORY_PATH.exists():
         return []
     try:
-        return json.loads(HISTORY_PATH.read_text(encoding="utf-8"))
+        items = json.loads(HISTORY_PATH.read_text(encoding="utf-8"))
+        _MEM_HISTORY.clear()
+        _MEM_HISTORY.extend(items)
+        return items
     except Exception:
         return []
 
 
 def clear_prediction_history() -> None:
-    if HISTORY_PATH.exists():
-        HISTORY_PATH.unlink()
+    _MEM_HISTORY.clear()
+    try:
+        if HISTORY_PATH.exists():
+            HISTORY_PATH.unlink()
+    except Exception:
+        pass
