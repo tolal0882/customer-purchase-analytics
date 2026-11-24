@@ -1,140 +1,97 @@
 ---
-title: Retail Purchase Analytics
+title: Online Shopping Purchase Intention & Session Segmentation
 emoji: 🛒
 colorFrom: green
 colorTo: gray
 sdk: streamlit
 sdk_version: 1.44.0
-app_file: frontend/app.py
+app_file: streamlit_app.py
 pinned: false
 ---
 
-# E-commerce Purchase Behavior Prediction and Customer Segmentation Using Machine Learning
+# Online Shopping Purchase Intention Prediction and Session Behavior Segmentation Using Machine Learning
 
-*An Interactive Data Science Application Using Streamlit, FastAPI, and React*
+*An Interactive Data Science Application Using Streamlit*
 
-Built by adapting our teacher's **CRISP-DM Data Science Web App Template**:
-**raw data (`events.csv`) ➜ cleaning (`make_dataset.py`) ➜ EDA & notebooks (`01..04`) ➜ supervised + unsupervised modelling (`train.py` & `clustering.py`) ➜ evaluation (`evaluate.py`) ➜ FastAPI (`backend_fastapi/`) ➜ 8-page Streamlit + React web app (`frontend/`).**
+Built on the **UCI Online Shoppers Purchasing Intention Dataset** (`12,330` shopping sessions, `17` input features, and binary target `Revenue`), this academic Data Science application demonstrates two complete machine learning workflows following **CRISP-DM**:
 
-```text
-┌────────────────────┐   HTTP / JSON   ┌──────────────────────┐   Python calls   ┌─────────────────────────┐
-│ Streamlit + React  │ ──────────────▶ │   FastAPI Backend    │ ───────────────▶ │   ml/ Pipeline Layer    │
-│ frontend/app.py    │ ◀────────────── │ backend_fastapi/     │ ◀─────────────── │ models/model.joblib     │
-│ (8 views)          │                 │ + SQLite history     │                  │ models/clustering.joblib│
-└────────────────────┘                 └──────────────────────┘                  └─────────────────────────┘
-```
+1. **Purchase Intention Prediction (Supervised Learning / Binary Classification):**
+   - Compares **Logistic Regression**, **Decision Tree Classifier**, and **Random Forest Classifier** using an **80/20 Stratified Train/Test Split** and **Stratified 5-Fold Cross-Validation**.
+   - Addresses class imbalance (`15.47%` purchase vs. `84.53%` non-purchase) with optional balanced class weights and evaluates **Precision, Recall, F1-Score, ROC-AUC, PR-AUC, Confusion Matrix, Classification Report, ROC Curve, and Precision–Recall Curve**.
+   - Includes a dedicated **`PageValues` Investigation** comparing a 17-feature pipeline against a 16-feature pipeline excluding `PageValues`.
+   - Persists fitted Scikit-learn `Pipeline` + `ColumnTransformer` bundles with **Joblib** (`models/classification/`) for live session purchase prediction and local prediction history logging.
 
----
-
-## 1. The Data-Science Workflow (CRISP-DM)
-
-| # | Phase | Where | Output |
-|---|---|---|---|
-| 1 | Business understanding | `reports/final_report_template.md`, `frontend/views/about.py` | Problem, objectives, success criteria |
-| 2 | Data understanding | `notebooks/01_eda.ipynb` | Data quality audit, funnel & target distribution |
-| 3 | Data preparation | `notebooks/02_data_cleaning.ipynb` ➜ `ml/data/make_dataset.py`, `ml/features.py` | `data/processed/clean.csv`, `customer_profiles.csv` |
-| 4 | Modelling | `notebooks/03_modeling.ipynb` ➜ `ml/train.py`, `ml/clustering.py` | 4 classifiers (5-fold CV + tuned) & K-Means ($K=2\dots8$) |
-| 5 | Evaluation | `notebooks/04_evaluation.ipynb` ➜ `ml/evaluate.py` | `models/metrics.json`, `model_card.md`, `reports/figures/*.png` |
-| 6 | Deployment | `backend_fastapi/main.py`, `frontend/app.py` (8 pages) | Working full-stack web application |
+2. **Session Behavior Segmentation (Unsupervised Learning / K-Means Clustering):**
+   - Segments shopping sessions using **K-Means Clustering** on browsing activity, duration, bounce/exit rates, and special-day proximity (**strictly excluding `Revenue` from clustering inputs**).
+   - Evaluates $K = 2 \dots 8$ using the **Elbow Method (Within-Cluster Inertia)** and **Silhouette Score**, projects sessions onto **2-D PCA**, generates data-driven segment interpretations from actual cluster centroids, and compares post-clustering purchase rates (`Revenue`) across segments strictly for interpretation.
 
 ---
 
-## 2. Project Structure (Teacher's Template Architecture)
+## 1. Project Folder Structure
 
 ```text
 customer-purchase-analytics/
+├── streamlit_app.py                     # Main Streamlit entrypoint (6 pages)
+├── requirements.txt                     # Minimal dependencies
+├── README.md                            # Setup & methodological documentation
+├── pytest.ini                           # Pytest configuration
+│
+├── app_pages/
+│   ├── dashboard.py                     # PAGE 1: Dashboard (4 filters, 6 KPIs, 6 Plotly charts)
+│   ├── dataset_eda.py                   # PAGE 2: Dataset Explorer & 4-Section EDA (A, B, C, D)
+│   ├── preprocessing.py                 # PAGE 3: Data Preprocessing (Validation, duplicate toggle, pipelines, CSV export)
+│   ├── purchase_prediction.py           # PAGE 4: Purchase Prediction (Training, PageValues study, Evaluation, Prediction, History)
+│   ├── session_segmentation.py          # PAGE 5: Session Segmentation (K-Means, Elbow/Silhouette, 2D PCA, Profiles, CSV export)
+│   └── about.py                         # PAGE 6: About Project (Objectives, UCI citation, CRISP-DM, live results, limitations)
+│
+├── src/
+│   ├── ui.py                            # Forest Green (#153E2D / #2F855A / #A7C957 / #F3F7F3) design system
+│   ├── data_loader.py                   # Cached CSV loading + file uploader fallback
+│   ├── data_validation.py               # Schema, dtype, missing, duplicate & domain validation
+│   ├── preprocessing.py                 # Explicit cleaning options & classification/clustering ColumnTransformers
+│   ├── classification.py                # Logistic Regression, Decision Tree, Random Forest & PageValues study
+│   ├── evaluation.py                    # Precision, Recall, F1, ROC-AUC, PR-AUC, Confusion Matrix, ROC/PR curves
+│   ├── prediction.py                    # Single-session inference & local prediction history
+│   ├── clustering.py                    # K-Means workflow, Elbow/Silhouette, 2D PCA, data-driven segment profiler
+│   └── model_manager.py                 # Joblib persistence for classification & clustering bundles
+│
 ├── data/
-│   ├── raw/events.csv                # Original Retailrocket clickstream dataset (2.75M rows, read-only)
-│   ├── processed/                    # clean.csv, customer_profiles.csv, insights_summary.json
-│   ├── predictions.db                # SQLite persistent prediction history
-│   └── README.md                     # Retailrocket data dictionary
-├── notebooks/
-│   ├── 01_eda.ipynb                  # Exploratory Data Analysis
-│   ├── 02_data_cleaning.ipynb        # Duplicate removal, 30-min sessions & snapshot engineering
-│   ├── 03_modeling.ipynb             # 4-classifier CV comparison, tuning & K-Means Elbow/Silhouette
-│   └── 04_evaluation.ipynb           # Held-out test evaluation, ROC/PR curves & cluster profiling
-├── ml/
-│   ├── config.py                     # Paths, target ("will_purchase"), features & hyperparameters
-│   ├── data/make_dataset.py          # Raw events.csv ➜ clean.csv & customer_profiles.csv
-│   ├── features.py                   # In-pipeline FunctionTransformer + ColumnTransformer
-│   ├── train.py                      # 5-fold Stratified CV, RandomizedSearchCV & model card generator
-│   ├── clustering.py                 # K-Means customer segmentation (log1p + StandardScaler + PCA)
-│   ├── evaluate.py                   # Test metrics & report figures
-│   └── service.py                    # Unified service layer called by FastAPI (with SQLite history)
-├── models/                           # model.joblib, clustering.joblib, metrics.json, model_card.md
-├── reports/
-│   ├── figures/                      # model_comparison.png, confusion_matrix.png, roc_curve.png,
-│   │                                 # feature_importance.png, elbow_silhouette.png, clusters_pca.png
-│   └── final_report_template.md      # Populated academic project report
-├── backend_fastapi/                  # FastAPI REST backend (/api/health, /schema, /data, /metrics,
-│                                     # /train, /predict, /predictions, /segments, /insights)
-├── backend_django/                   # Optional Django REST backend from template
-├── frontend/                         # 8-page Streamlit + React application
-│   ├── app.py                        # Main Streamlit entrypoint
-│   ├── config.py                     # Project title, description & team info
-│   ├── api_client.py                 # HTTP client for FastAPI (with automatic direct-service fallback)
-│   ├── components/                   # Compiled React + TypeScript + Tailwind bundle & bridge
-│   └── views/                        # 8 pages: home, data_explorer, prediction, segmentation,
-│                                     # model_performance, history, insights, about
-├── tests/test_pipeline.py            # Pytest suite (cleaning, features, classification, clustering, API)
-└── requirements.txt
+│   ├── raw/
+│   │   └── online_shoppers_intention.csv  # Official UCI dataset (12,330 × 18, read-only)
+│   └── processed/                       # Exported processed CSVs & local prediction_history.json
+│
+├── models/
+│   ├── classification/                  # Saved Joblib classification pipelines & metadata JSON
+│   └── clustering/                      # Saved Joblib K-Means clustering bundle & metadata JSON
+│
+└── tests/
+    └── test_project.py                  # Automated pytest suite verifying all acceptance criteria
 ```
 
 ---
 
-## 3. Setup & Installation
+## 2. Installation & Local Execution
 
 ```bash
+# 1. Create and activate a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
+# 2. Install minimal dependencies
 pip install -r requirements.txt
-pip install -r backend_fastapi/requirements.txt
-pip install -r frontend/requirements.txt
-```
 
-Place the Retailrocket `events.csv` file from [Kaggle](https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset) into `data/raw/events.csv`.
+# 3. Run the automated test suite
+pytest -v
 
----
-
-## 4. Run the ML Pipeline (From Project Root)
-
-```bash
-python -m ml.data.make_dataset    # clean raw events.csv ➜ data/processed/clean.csv & customer_profiles.csv
-python -m ml.train                # compare 4 classifiers (5-fold CV), tune best, run K-Means (K=4), save all
-pytest                            # run automated test suite
-```
-
-Actual output of `python -m ml.train` on Retailrocket:
-
-```text
-Data: 24,000 train / 6,000 test rows, 9 input columns
-
-1) Comparing models (5-fold CV on training set):
-  Logistic Regression    f1 = 0.4266 ± 0.0087
-  Random Forest          f1 = 0.4227 ± 0.0117
-  Gradient Boosting      f1 = 0.3466 ± 0.0240
-  Decision Tree          f1 = 0.3092 ± 0.0164
-
-2) Tuning best model: Logistic Regression  (best params: {'C': 3.0})
-3) Evaluating on the TEST set:
-   accuracy 0.8650 · precision 0.3118 · recall 0.6462 · f1 0.4206 · roc_auc 0.8165 · pr_auc 0.3758
-4) Running K-Means Customer Segmentation:
-   K-Means (K=4) trained on 25,000 customers · Silhouette = 0.3413
+# 4. Launch the 6-page Streamlit application
+streamlit run streamlit_app.py
 ```
 
 ---
 
-## 5. Run the Web Application
+## 3. Dataset Citation & License
 
-**Terminal 1 – FastAPI Backend** (from project root):
-```bash
-.venv/bin/uvicorn backend_fastapi.main:app --reload --port 8000
-```
-*(Interactive Swagger docs: http://localhost:8000/docs)*
-
-**Terminal 2 – Streamlit + React Frontend** (from project root):
-```bash
-.venv/bin/streamlit run frontend/app.py
-```
-*(App URL: http://localhost:8501 — Note: if FastAPI is not started separately, `frontend/api_client.py` automatically falls back to calling `ml.service` directly so single-command demos work seamlessly!)*
+- **Source:** https://archive.ics.uci.edu/dataset/468/online+shoppers+purchasing+intention+dataset
+- **License:** Creative Commons Attribution 4.0 International (**CC BY 4.0**)
+- **Citation:**
+  > Sakar, C. & Kastro, Y. (2018). *Online Shoppers Purchasing Intention Dataset.* UCI Machine Learning Repository. https://doi.org/10.24432/C5F88Q.
