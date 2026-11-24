@@ -74,7 +74,7 @@ def build_classifier(
             min_samples_split=int(hp.get("min_samples_split", 10)),
             min_samples_leaf=int(hp.get("min_samples_leaf", 5)),
             class_weight=cw,
-            n_jobs=-1,
+            n_jobs=1,
             random_state=int(random_state),
         )
     raise ValueError(f"Unsupported algorithm: {algorithm_name}")
@@ -159,7 +159,7 @@ def train_and_evaluate_models(
             y_train,
             cv=skf,
             scoring=SCORING_METRICS,
-            n_jobs=-1,
+            n_jobs=1,
         )
 
         # Fit strictly on X_train
