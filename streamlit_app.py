@@ -8,7 +8,15 @@ Run from the project root:
 """
 from __future__ import annotations
 
+import runpy
+import sys
+from pathlib import Path
+
 import streamlit as st
+
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from src import data_loader, model_manager, ui
 
@@ -20,15 +28,40 @@ st.set_page_config(
 )
 ui.inject_css()
 
+
 # =============================================================================
-# 1. SIX MAIN APPLICATION PAGES (CATEGORIZED NATIVE NAVIGATION)
+# 1. SIX MAIN APPLICATION PAGES (CALLABLE WRAPPERS WORK FROM ANY ENTRYPOINT DIR)
 # =============================================================================
-pg_dashboard = st.Page("app_pages/dashboard.py", title="1. Dashboard", icon="📊", default=True)
-pg_eda = st.Page("app_pages/dataset_eda.py", title="2. Dataset Explorer & EDA", icon="🔍")
-pg_prep = st.Page("app_pages/preprocessing.py", title="3. Data Preprocessing", icon="🧹")
-pg_pred = st.Page("app_pages/purchase_prediction.py", title="4. Purchase Prediction", icon="🎯")
-pg_seg = st.Page("app_pages/session_segmentation.py", title="5. Session Segmentation", icon="🧩")
-pg_about = st.Page("app_pages/about.py", title="6. About Project", icon="ℹ️")
+def _page_dashboard():
+    runpy.run_path(str(ROOT_DIR / "app_pages" / "dashboard.py"), run_name="__main__")
+
+
+def _page_dataset_eda():
+    runpy.run_path(str(ROOT_DIR / "app_pages" / "dataset_eda.py"), run_name="__main__")
+
+
+def _page_preprocessing():
+    runpy.run_path(str(ROOT_DIR / "app_pages" / "preprocessing.py"), run_name="__main__")
+
+
+def _page_purchase_prediction():
+    runpy.run_path(str(ROOT_DIR / "app_pages" / "purchase_prediction.py"), run_name="__main__")
+
+
+def _page_session_segmentation():
+    runpy.run_path(str(ROOT_DIR / "app_pages" / "session_segmentation.py"), run_name="__main__")
+
+
+def _page_about():
+    runpy.run_path(str(ROOT_DIR / "app_pages" / "about.py"), run_name="__main__")
+
+
+pg_dashboard = st.Page(_page_dashboard, title="1. Dashboard", icon="📊", url_path="dashboard", default=True)
+pg_eda = st.Page(_page_dataset_eda, title="2. Dataset Explorer & EDA", icon="🔍", url_path="dataset_eda")
+pg_prep = st.Page(_page_preprocessing, title="3. Data Preprocessing", icon="🧹", url_path="preprocessing")
+pg_pred = st.Page(_page_purchase_prediction, title="4. Purchase Prediction", icon="🎯", url_path="purchase_prediction")
+pg_seg = st.Page(_page_session_segmentation, title="5. Session Segmentation", icon="🧩", url_path="session_segmentation")
+pg_about = st.Page(_page_about, title="6. About Project", icon="ℹ️", url_path="about")
 
 nav = st.navigation(
     {
