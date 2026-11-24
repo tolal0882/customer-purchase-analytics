@@ -1,7 +1,7 @@
 {
-  "model_id": "random_forest_classifier_20261124_112221",
+  "model_id": "random_forest_classifier_20261124_122417",
   "model_name": "Random Forest Classifier",
-  "trained_at": "2026-11-24T11:22:18",
+  "trained_at": "2026-11-24T12:24:14",
   "selected_features": [
     "Administrative",
     "Administrative_Duration",
@@ -701,5 +701,5 @@
       "importance": 0.0077
     }
   ],
-  "joblib_file": "random_forest_classifier_20261124_112221.joblib"
+  "joblib_file": "random_forest_classifier_20261124_122417.joblib"
 }

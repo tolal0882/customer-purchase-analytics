@@ -1,12 +1,22 @@
 """
 Dataset Validation & Feature Group Definitions for the UCI Online Shoppers
 Purchasing Intention Dataset (Sakar & Kastro, 2018).
+
+This module defines:
+  1. Expected 18-column schema (17 input features + 1 binary target `Revenue`)
+  2. The 5 official CRISP-DM feature groups (Section 5.2)
+  3. Continuous numerical features vs. nominal/categorical features
+  4. Default and optional clustering features (strictly excluding `Revenue`)
+  5. Complete dataset validation function (`validate_dataset`)
 """
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 
+# =============================================================================
+# 1. TARGET & SCHEMA DEFINITIONS (17 INPUT FEATURES + 1 TARGET = 18 COLUMNS)
+# =============================================================================
 TARGET_COL = "Revenue"
 
 EXPECTED_COLUMNS = [
@@ -30,9 +40,13 @@ EXPECTED_COLUMNS = [
     "Revenue",
 ]
 
+# All 17 predictor columns (excluding the target column Revenue)
 INPUT_FEATURES = [c for c in EXPECTED_COLUMNS if c != TARGET_COL]
 
-# Section 5.2 Feature Groups
+# =============================================================================
+# 2. FEATURE GROUPS (SECTION 5.2)
+#    Organizes the 17 input features into 5 domain-meaningful behavioral groups.
+# =============================================================================
 FEATURE_GROUPS = {
     "Browsing Activity": ["Administrative", "Informational", "ProductRelated"],
     "Browsing Duration": ["Administrative_Duration", "Informational_Duration", "ProductRelated_Duration"],
@@ -41,7 +55,12 @@ FEATURE_GROUPS = {
     "Technical & Geographic": ["OperatingSystems", "Browser", "Region", "TrafficType"],
 }
 
-# Continuous / numerical features vs categorical / nominal features
+# =============================================================================
+# 3. NUMERICAL VS. CATEGORICAL FEATURE SEPARATION
+#    - CONTINUOUS_FEATURES are scaled with StandardScaler/RobustScaler/MinMaxScaler.
+#    - NOMINAL_CATEGORICAL_FEATURES (including integer-coded OS, Browser, Region,
+#      TrafficType) are encoded with OneHotEncoder(handle_unknown="ignore").
+# =============================================================================
 CONTINUOUS_FEATURES = [
     "Administrative",
     "Administrative_Duration",
@@ -65,7 +84,11 @@ NOMINAL_CATEGORICAL_FEATURES = [
     "TrafficType",
 ]
 
-# Section 7 Default & Optional Clustering Features (Revenue is strictly forbidden)
+# =============================================================================
+# 4. CLUSTERING FEATURE SETS (SECTION 7)
+#    CRITICAL RULE: 'Revenue' is never included in default or optional clustering
+#    features so K-Means discovers purely behavioral session segments.
+# =============================================================================
 DEFAULT_CLUSTERING_FEATURES = [
     "Administrative",
     "Administrative_Duration",
@@ -85,8 +108,10 @@ OPTIONAL_CLUSTERING_FEATURES = [
     "Weekend",
 ]
 
+# Chronological calendar order for the 10 months present in the UCI dataset
 MONTH_ORDER = ["Feb", "Mar", "May", "June", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+# Human-readable data dictionary descriptions for every column
 FEATURE_DESCRIPTIONS = {
     "Administrative": "Number of administrative pages visited by the visitor in that session.",
     "Administrative_Duration": "Total time (seconds) spent on administrative pages during the session.",
@@ -109,32 +134,28 @@ FEATURE_DESCRIPTIONS = {
 }
 
 
+# =============================================================================
+# 5. DATASET VALIDATION & QUALITY AUDIT FUNCTION (SECTION 4)
+#    Inspects shape, column presence, data types, missing values, exact duplicate
+#    records, target class distribution, and domain range constraints.
+# =============================================================================
 def validate_dataset(df: pd.DataFrame) -> dict:
     """Run complete schema, dtype, missing, duplicate, target, and range checks."""
+    # 5.1 Check column names against expected UCI schema
     present_cols = list(df.columns)
     missing_cols = [c for c in EXPECTED_COLUMNS if c not in present_cols]
     extra_cols = [c for c in present_cols if c not in EXPECTED_COLUMNS]
     is_valid_schema = len(missing_cols) == 0
 
+    # 5.2 Inspect dimensions, exact duplicate rows, and total missing cells
     n_rows, n_cols = df.shape
     duplicate_mask = df.duplicated(keep="first")
     n_duplicates = int(duplicate_mask.sum())
     n_missing_total = int(df.isna().sum().sum())
 
-    # Invalid value checks
+    # 5.3 Domain & invalid-value checks (non-negative counts/durations, [0, 1] rates)
     invalid_checks = []
-    for col in [
-        "Administrative",
-        "Administrative_Duration",
-        "Informational",
-        "Informational_Duration",
-        "ProductRelated",
-        "ProductRelated_Duration",
-        "BounceRates",
-        "ExitRates",
-        "PageValues",
-        "SpecialDay",
-    ]:
+    for col in CONTINUOUS_FEATURES:
         if col in df.columns and pd.api.types.is_numeric_dtype(df[col]):
             neg_cnt = int((df[col] < 0).sum())
             invalid_checks.append({
@@ -163,7 +184,7 @@ def validate_dataset(df: pd.DataFrame) -> dict:
             "Status": "Pass" if sp_cnt == 0 else "Warning",
         })
 
-    # Per-column summary table
+    # 5.4 Build per-column data dictionary and quality summary table
     col_summary = []
     group_lookup = {col: grp for grp, cols in FEATURE_GROUPS.items() for col in cols}
     group_lookup[TARGET_COL] = "Target (Supervised)"
@@ -181,7 +202,7 @@ def validate_dataset(df: pd.DataFrame) -> dict:
             "Description": FEATURE_DESCRIPTIONS.get(col, ""),
         })
 
-    # Target distribution
+    # 5.5 Compute Revenue target class distribution and imbalance ratio
     target_dist = {}
     if TARGET_COL in df.columns:
         rev_bool = df[TARGET_COL].astype(bool)

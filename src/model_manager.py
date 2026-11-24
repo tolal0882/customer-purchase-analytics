@@ -17,6 +17,10 @@ import joblib
 
 from src import data_loader
 
+# =============================================================================
+# 1. IN-MEMORY CACHE & WRITABLE DIRECTORY RESOLUTION
+#    Ensures fast model access and safe fallback on read-only cloud containers.
+# =============================================================================
 _MEM_CACHE: dict = {
     "active_bundle": None,
     "bundles_by_id": {},
@@ -53,6 +57,11 @@ def ensure_model_dirs() -> None:
     CLUSTERING_DIR.mkdir(parents=True, exist_ok=True)
 
 
+# =============================================================================
+# 2. SAVE & LIST CLASSIFICATION PIPELINE BUNDLES (JOBLIB + JSON REGISTRY)
+#    Persists the fitted Pipeline, selected features, training configuration,
+#    dataset info, evaluation metrics, and timestamp.
+# =============================================================================
 def save_classification_bundle(bundle: dict) -> dict:
     """Persist a fitted classification pipeline bundle with Joblib and update the registry."""
     ensure_model_dirs()
@@ -89,6 +98,7 @@ def save_classification_bundle(bundle: dict) -> dict:
 
 
 def list_saved_classifiers() -> list[dict]:
+    """Return metadata for all available saved classification models."""
     ensure_model_dirs()
     if _MEM_CACHE["registry"]:
         return list(_MEM_CACHE["registry"])
@@ -113,6 +123,10 @@ def list_saved_classifiers() -> list[dict]:
     return []
 
 
+# =============================================================================
+# 3. LOAD SAVED CLASSIFICATION PIPELINE BUNDLE
+#    Loads a specific model by ID or the most recent active classifier bundle.
+# =============================================================================
 def load_classifier_bundle(model_id: str | None = None) -> dict | None:
     """Load a specific saved classification bundle by model_id, or the active classifier bundle."""
     ensure_model_dirs()
@@ -139,6 +153,9 @@ def load_classifier_bundle(model_id: str | None = None) -> dict | None:
     return None
 
 
+# =============================================================================
+# 4. SAVE CLUSTERING BUNDLE (K-MEANS + PREPROCESSOR + PCA)
+# =============================================================================
 def save_clustering_bundle(bundle: dict) -> str:
     """Persist a fitted K-Means clustering bundle to models/clustering/."""
     ensure_model_dirs()

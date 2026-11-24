@@ -15,10 +15,18 @@ import pandas as pd
 
 from src import data_loader, data_validation, model_manager, preprocessing
 
+# =============================================================================
+# 1. LOCAL PREDICTION HISTORY STORAGE PATH & IN-MEMORY FALLBACK
+# =============================================================================
 HISTORY_PATH = data_loader.PROCESSED_DIR / "prediction_history.json"
 _MEM_HISTORY: list[dict] = []
 
 
+# =============================================================================
+# 2. INPUT VALIDATION FUNCTION (SECTION 6 & PAGE 4)
+#    Checks that all required model features are present and that numeric counts,
+#    durations, bounce/exit rates, and SpecialDay values are within valid bounds.
+# =============================================================================
 def validate_prediction_inputs(input_values: dict, required_features: list[str]) -> list[str]:
     """Validate user inputs before running prediction."""
     errors = []
@@ -27,18 +35,7 @@ def validate_prediction_inputs(input_values: dict, required_features: list[str])
         errors.append(f"Missing required model input features: {missing}")
         return errors
 
-    for col in [
-        "Administrative",
-        "Administrative_Duration",
-        "Informational",
-        "Informational_Duration",
-        "ProductRelated",
-        "ProductRelated_Duration",
-        "BounceRates",
-        "ExitRates",
-        "PageValues",
-        "SpecialDay",
-    ]:
+    for col in data_validation.CONTINUOUS_FEATURES:
         if col in input_values:
             val = float(input_values[col])
             if val < 0:
@@ -55,6 +52,12 @@ def validate_prediction_inputs(input_values: dict, required_features: list[str])
     return errors
 
 
+# =============================================================================
+# 3. SINGLE-SESSION PURCHASE INTENTION PREDICTION & LOCAL EXPLANATION
+#    Loads the selected Joblib pipeline, predicts class (0 or 1) and purchase
+#    probability, computes per-feature probability shifts relative to the
+#    training baseline, and logs the prediction to local history.
+# =============================================================================
 def predict_session(input_values: dict, model_id: str | None = None) -> dict:
     """Run purchase intention prediction on a single session using a saved compatible pipeline."""
     bundle = model_manager.load_classifier_bundle(model_id)
@@ -74,7 +77,7 @@ def predict_session(input_values: dict, model_id: str | None = None) -> dict:
     prob_purchase = float(pipe.predict_proba(X_in)[0, 1]) if hasattr(pipe, "predict_proba") else float(pred_class)
     timestamp = datetime.now().isoformat(timespec="seconds")
 
-    # Local feature-perturbation explanation against training defaults
+    # Compute local feature-perturbation explanation against training median/mode
     defaults = bundle.get("feature_defaults", {})
     effects = []
     if hasattr(pipe, "predict_proba") and defaults:
@@ -108,6 +111,11 @@ def predict_session(input_values: dict, model_id: str | None = None) -> dict:
     return result
 
 
+# =============================================================================
+# 4. LOCAL PREDICTION HISTORY PERSISTENCE & MANAGEMENT
+#    Stores predictions locally in `data/processed/prediction_history.json`
+#    and labels every row as a model estimate (never an actual purchase).
+# =============================================================================
 def append_prediction_history(record: dict) -> None:
     """Persist prediction record locally in data/processed/prediction_history.json (with memory fallback)."""
     history = load_prediction_history()

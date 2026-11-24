@@ -23,6 +23,11 @@ from sklearn.metrics import (
 )
 
 
+# =============================================================================
+# 1. BINARY CLASSIFICATION METRICS CALCULATOR (SECTION 6)
+#    Computes Accuracy, Precision, Recall, F1-score, ROC-AUC, and PR-AUC
+#    to evaluate classifiers properly under the 15.47% Revenue class imbalance.
+# =============================================================================
 def compute_classification_metrics(
     y_true: np.ndarray,
     y_pred: np.ndarray,
@@ -42,6 +47,11 @@ def compute_classification_metrics(
     }
 
 
+# =============================================================================
+# 2. CONFUSION MATRIX & CLASSIFICATION REPORT BUILDER
+#    Extracts TN, FP, FN, TP counts and formats per-class Precision, Recall,
+#    F1-score, and Support into a clean table for Streamlit display.
+# =============================================================================
 def compute_confusion_and_report(y_true: np.ndarray, y_pred: np.ndarray) -> tuple[dict, list[dict]]:
     """Return Confusion Matrix dict and structured Classification Report rows."""
     y_t = np.asarray(y_true, dtype=int)
@@ -77,6 +87,10 @@ def compute_confusion_and_report(y_true: np.ndarray, y_pred: np.ndarray) -> tupl
     return cm_dict, rows
 
 
+# =============================================================================
+# 3. ROC CURVE & PRECISION-RECALL CURVE COORDINATE GENERATOR
+#    Computes FPR/TPR (ROC) and Recall/Precision (PR) arrays for Plotly charts.
+# =============================================================================
 def compute_curves(y_true: np.ndarray, y_proba: np.ndarray, max_points: int = 120) -> dict:
     """Compute downsampled ROC and Precision-Recall curve points for Plotly visualization."""
     y_t = np.asarray(y_true, dtype=int)
@@ -98,6 +112,11 @@ def compute_curves(y_true: np.ndarray, y_proba: np.ndarray, max_points: int = 12
     }
 
 
+# =============================================================================
+# 4. PIPELINE FEATURE IMPORTANCE EXTRACTOR
+#    Extracts tree feature_importances_ (Decision Tree / Random Forest) or
+#    absolute standardized coefficients |coef_| (Logistic Regression).
+# =============================================================================
 def extract_feature_importance(fitted_pipeline, top_n: int = 15) -> list[dict]:
     """Extract feature importance or standardized absolute coefficients from a fitted pipeline."""
     try:

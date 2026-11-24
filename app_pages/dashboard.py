@@ -60,7 +60,7 @@ with st.container(border=True):
         "Revenue (Purchase Outcome)",
         options=[False, True],
         default=[False, True],
-        format_func=lambda x: "Purchase (True)" if x else "No Purchase (False)",
+        format_func=lambda x: "Purchase" if x else "No Purchase",
     )
 
 mask = (

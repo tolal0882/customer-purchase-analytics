@@ -291,15 +291,21 @@ button[kind="primary"]:hover {{
 """
 
 
+# =============================================================================
+# 2. REUSABLE UI HELPER FUNCTIONS (PAGE HEADERS, KPI CARDS, CHART CARDS, NOTES)
+# =============================================================================
 def inject_css() -> None:
+    """Inject the Forest Green design system CSS into the current Streamlit page."""
     st.markdown(CSS, unsafe_allow_html=True)
 
 
 def esc(val) -> str:
+    """HTML-escape any dynamic string before rendering inside custom HTML cards."""
     return html.escape(str(val))
 
 
 def badge(text: str, kind: str = "neutral") -> str:
+    """Render a pill-shaped status badge ('ok', 'warn', 'info', or 'neutral')."""
     return f'<span class="badge {kind}">{esc(text)}</span>'
 
 

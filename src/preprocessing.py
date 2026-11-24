@@ -18,6 +18,12 @@ from sklearn.preprocessing import FunctionTransformer, MinMaxScaler, OneHotEncod
 from src import data_loader, data_validation
 
 
+# =============================================================================
+# 1. EXPLICIT CLEANING & DUPLICATE HANDLING (SECTION 4 & SECTION 5.1)
+#    Never modifies the original raw file. Optionally removes the 125 exact
+#    duplicate rows only when explicitly requested by the user, and returns
+#    a transparent before-vs-after comparison dictionary.
+# =============================================================================
 def apply_cleaning_options(
     df: pd.DataFrame,
     drop_duplicates: bool = False,
@@ -28,7 +34,7 @@ def apply_cleaning_options(
     rev_before = df[data_validation.TARGET_COL].astype(bool)
 
     out = df.copy()
-    # Ensure consistent types without altering values
+    # Normalize boolean columns without altering values
     if "Weekend" in out.columns:
         out["Weekend"] = out["Weekend"].astype(bool)
     if data_validation.TARGET_COL in out.columns:
@@ -57,6 +63,11 @@ def apply_cleaning_options(
     return out, summary
 
 
+# =============================================================================
+# 2. SCALER, LOG1P TRANSFORM & FEATURE TYPE HELPERS
+#    Provides configurable numerical scalers (StandardScaler, RobustScaler,
+#    MinMaxScaler) and separates continuous features from categorical ones.
+# =============================================================================
 def get_scaler(scaler_name: str = "standard"):
     if scaler_name == "robust":
         return RobustScaler()
@@ -66,6 +77,7 @@ def get_scaler(scaler_name: str = "standard"):
 
 
 def _log1p_array(X):
+    """Apply log(1 + x) safely to non-negative numerical features to reduce right-skewness."""
     return np.log1p(np.clip(np.asarray(X, dtype=float), 0.0, None))
 
 
@@ -77,6 +89,12 @@ def split_feature_types(selected_features: list[str]) -> tuple[list[str], list[s
     return num_cols, cat_cols
 
 
+# =============================================================================
+# 3. SUPERVISED CLASSIFICATION PREPROCESSING PIPELINE (SECTION 5.1 & 6)
+#    Builds a Scikit-learn ColumnTransformer that imputes and scales numerical
+#    features and one-hot encodes categorical features. Wrapped inside the
+#    classification Pipeline so it is fitted ONLY on X_train (zero test leakage).
+# =============================================================================
 def build_classification_preprocessor(
     selected_features: list[str],
     scaler_name: str = "standard",
@@ -108,6 +126,11 @@ def build_classification_preprocessor(
     return ColumnTransformer(transformers=transformers, remainder="drop")
 
 
+# =============================================================================
+# 4. UNSUPERVISED CLUSTERING PREPROCESSING PIPELINE (SECTION 5.1 & 7)
+#    Builds a separate ColumnTransformer for K-Means session segmentation.
+#    Strictly blocks 'Revenue' from ever entering the clustering feature matrix.
+# =============================================================================
 def build_clustering_preprocessor(
     selected_features: list[str],
     scaler_name: str = "standard",
@@ -139,6 +162,11 @@ def build_clustering_preprocessor(
     return ColumnTransformer(transformers=transformers, remainder="drop")
 
 
+# =============================================================================
+# 5. TYPE PREPARATION & PROCESSED CSV EXPORT HELPERS
+#    Ensures consistent dtypes before passing data into ColumnTransformer and
+#    exports processed tables to `data/processed/` separately from `data/raw/`.
+# =============================================================================
 def prepare_features_for_transform(df: pd.DataFrame, selected_features: list[str]) -> pd.DataFrame:
     """Return a clean copy of X[selected_features] with categorical columns cast to string for OneHotEncoder."""
     X = df[selected_features].copy()

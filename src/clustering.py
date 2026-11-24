@@ -22,6 +22,12 @@ from sklearn.metrics import davies_bouldin_score, silhouette_score
 from src import data_validation, model_manager, preprocessing
 
 
+# =============================================================================
+# 1. DATA-DRIVEN SESSION BEHAVIOR SEGMENT PROFILER (SECTION 7)
+#    Names and describes each cluster strictly from its actual centroid feature
+#    means and standardized z-scores—never using hardcoded customer loyalty
+#    labels (because rows represent single shopping sessions).
+# =============================================================================
 def _generate_data_driven_segment_profile(
     cluster_id: int,
     z_scores: dict[str, float],
@@ -76,6 +82,16 @@ def _generate_data_driven_segment_profile(
     return label, description
 
 
+# =============================================================================
+# 2. COMPLETE K-MEANS SESSION SEGMENTATION WORKFLOW (SECTION 7)
+#    Steps:
+#      1. Validate feature selection and strictly block 'Revenue'
+#      2. Preprocess & scale selected features
+#      3. Evaluate multiple K values (Inertia for Elbow + Silhouette Score)
+#      4. Train K-Means with chosen K & assign cluster labels
+#      5. Project scaled features onto 2-D PCA for visualization
+#      6. Build data-driven cluster profiles & compare post-hoc Revenue rates
+# =============================================================================
 def run_session_segmentation(
     df: pd.DataFrame,
     selected_features: list[str] | None = None,
@@ -89,12 +105,14 @@ def run_session_segmentation(
     drop_duplicates: bool = False,
 ) -> dict:
     """Execute the full K-Means session behavior segmentation workflow (Section 7)."""
+    # 2.1 Validate features & enforce strict Revenue exclusion rule
     features = list(selected_features or data_validation.DEFAULT_CLUSTERING_FEATURES)
     if data_validation.TARGET_COL in features:
         raise ValueError("CRITICAL RULE: 'Revenue' must never be included in clustering features.")
     if len(features) < 2:
         raise ValueError("Please select at least 2 features for K-Means clustering.")
 
+    # 2.2 Clean dataset & transform clustering features (scaling + optional encoding)
     clean_df, clean_info = preprocessing.apply_cleaning_options(df, drop_duplicates=drop_duplicates)
     X_in = preprocessing.prepare_features_for_transform(clean_df, features)
 
@@ -103,7 +121,7 @@ def run_session_segmentation(
     )
     X_trans = preprocessor.fit_transform(X_in)
 
-    # Evaluate K range for Elbow Method & Silhouette Score
+    # 2.3 Evaluate K range (K = k_min..k_max) for Elbow Method (Inertia) & Silhouette Score
     k_eval_rows = []
     sil_sample_size = min(5000, len(X_trans))
     k_values = list(range(max(2, int(k_min)), max(int(k_max) + 1, int(n_clusters) + 1)))
@@ -126,7 +144,7 @@ def run_session_segmentation(
             "davies_bouldin": round(db_k, 4),
         })
 
-    # Fit chosen K-Means model
+    # 2.4 Fit final K-Means model with user-selected K and assign cluster labels
     km = KMeans(
         n_clusters=int(n_clusters),
         n_init=10,
@@ -139,21 +157,20 @@ def run_session_segmentation(
     )
     chosen_db = float(davies_bouldin_score(X_trans, labels))
 
-    # 2-D PCA visualization
+    # 2.5 Compute 2-D Principal Component Analysis (PCA) coordinates
     pca = PCA(n_components=2, random_state=int(random_state))
     coords = pca.fit_transform(X_trans)
     explained_var = [round(float(v * 100), 2) for v in pca.explained_variance_ratio_]
 
-    # Compute cluster profiles from numeric features + post-clustering Revenue analysis
-    num_features, cat_features = preprocessing.split_feature_types(features)
-    # Include all core numeric features in profile summary for interpretability
+    # 2.6 Generate data-driven cluster profiles & post-clustering Revenue comparison
+    num_features, _ = preprocessing.split_feature_types(features)
     profile_num_cols = list(dict.fromkeys(num_features + data_validation.DEFAULT_CLUSTERING_FEATURES))
     profile_num_cols = [c for c in profile_num_cols if c in clean_df.columns]
 
     global_means = clean_df[profile_num_cols].mean()
     global_stds = clean_df[profile_num_cols].std().replace(0, 1.0)
 
-    # Post-clustering Revenue (strictly for interpretation after cluster assignment)
+    # Revenue is used ONLY after clustering to inspect segment conversion rates
     revenue_bool = clean_df[data_validation.TARGET_COL].astype(bool)
 
     profiles = []
@@ -173,7 +190,7 @@ def run_session_segmentation(
         seg_name, seg_desc = _generate_data_driven_segment_profile(cid, c_z, c_means)
         segment_name_map[cid] = seg_name
 
-        # Post-hoc Revenue analysis
+        # Post-hoc Revenue rate (interpretation only)
         rev_sub = revenue_bool.loc[mask]
         purchase_sessions = int(rev_sub.sum())
         purchase_rate_pct = round(float(rev_sub.mean() * 100), 2) if size > 0 else 0.0
@@ -197,7 +214,7 @@ def run_session_segmentation(
             "interpretation": seg_desc,
         })
 
-    # Full assignments DataFrame for CSV export & PCA sample for interactive plotting
+    # 2.7 Build full session assignments table for CSV export & sample for PCA scatter chart
     assignments_df = clean_df.copy()
     assignments_df["Cluster_ID"] = labels
     assignments_df["Session_Segment"] = [segment_name_map[int(c)] for c in labels]

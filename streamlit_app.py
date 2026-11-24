@@ -14,6 +14,10 @@ from pathlib import Path
 
 import streamlit as st
 
+# =============================================================================
+# 1. WORKSPACE PATH SETUP
+#    Ensures `src/` and `app_pages/` resolve regardless of working directory.
+# =============================================================================
 ROOT_DIR = Path(__file__).resolve().parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
@@ -21,6 +25,11 @@ if str(ROOT_DIR) not in sys.path:
 from src import data_loader, model_manager, ui
 
 
+# =============================================================================
+# 2. SIX PAGE CALLABLE WRAPPERS (SECTION 8)
+#    Using callable functions with absolute paths guarantees that Streamlit
+#    locates each page file whether launched via `streamlit_app.py` or `frontend/app.py`.
+# =============================================================================
 def _page_dashboard():
     runpy.run_path(str(ROOT_DIR / "app_pages" / "dashboard.py"), run_name="__main__")
 
@@ -45,7 +54,11 @@ def _page_about():
     runpy.run_path(str(ROOT_DIR / "app_pages" / "about.py"), run_name="__main__")
 
 
+# =============================================================================
+# 3. APPLICATION SHELL, SIDEBAR NAVIGATION & LIVE STATUS PANEL
+# =============================================================================
 def main() -> None:
+    # 3.1 Configure browser tab title, icon, wide layout, and inject Forest Green CSS
     st.set_page_config(
         page_title="Online Shopping Purchase Intention & Session Segmentation",
         page_icon="🛒",
@@ -54,6 +67,7 @@ def main() -> None:
     )
     ui.inject_css()
 
+    # 3.2 Register the 6 required application pages
     pg_dashboard = st.Page(_page_dashboard, title="1. Dashboard", icon="📊", url_path="dashboard", default=True)
     pg_eda = st.Page(_page_dataset_eda, title="2. Dataset Explorer & EDA", icon="🔍", url_path="dataset_eda")
     pg_prep = st.Page(_page_preprocessing, title="3. Data Preprocessing", icon="🧹", url_path="preprocessing")
@@ -70,6 +84,7 @@ def main() -> None:
         position="sidebar",
     )
 
+    # 3.3 Render live dataset & active model summary card inside the sidebar
     file_meta = data_loader.get_file_metadata()
     active_cls = model_manager.load_classifier_bundle()
 
@@ -91,6 +106,7 @@ def main() -> None:
             unsafe_allow_html=True,
         )
 
+    # 3.4 Execute the currently selected page
     nav.run()
 
 
