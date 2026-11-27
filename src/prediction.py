@@ -9,7 +9,9 @@ Prediction & Local Prediction History Module (Section 6 & Page 4):
 from __future__ import annotations
 
 import json
+import tempfile
 from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 
@@ -17,8 +19,9 @@ from src import data_loader, data_validation, model_manager, preprocessing
 
 # =============================================================================
 # 1. LOCAL PREDICTION HISTORY STORAGE PATH & IN-MEMORY FALLBACK
+#    Stored in temp dir so writing history never triggers Streamlit file watcher.
 # =============================================================================
-HISTORY_PATH = data_loader.PROCESSED_DIR / "prediction_history.json"
+HISTORY_PATH = Path(tempfile.gettempdir()) / "uci_online_shoppers_prediction_history.json"
 _MEM_HISTORY: list[dict] = []
 
 

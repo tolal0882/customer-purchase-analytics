@@ -1,7 +1,7 @@
 [server]
 headless = true
 maxUploadSize = 200
-fileWatcherType = "none"
+fileWatcherType = "auto"
 
 [theme]
 primaryColor = "#2F855A"

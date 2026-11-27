@@ -30,18 +30,11 @@ _MEM_CACHE: dict = {
 
 
 def _writable_models_dir() -> Path:
-    """Return project `models/` if writable, otherwise a writable temp directory."""
-    proj_models = data_loader.ROOT_DIR / "models"
-    try:
-        proj_models.mkdir(parents=True, exist_ok=True)
-        test_file = proj_models / ".write_check"
-        test_file.write_text("ok", encoding="utf-8")
-        test_file.unlink(missing_ok=True)
-        return proj_models
-    except Exception:
-        fallback = Path(tempfile.gettempdir()) / "uci_online_shoppers_models"
-        fallback.mkdir(parents=True, exist_ok=True)
-        return fallback
+    """Use a temp directory outside the git repo so Joblib disk writes never trigger
+    Streamlit's file watcher when fileWatcherType='auto'."""
+    fallback = Path(tempfile.gettempdir()) / "uci_online_shoppers_models"
+    fallback.mkdir(parents=True, exist_ok=True)
+    return fallback
 
 
 MODELS_DIR = _writable_models_dir()
