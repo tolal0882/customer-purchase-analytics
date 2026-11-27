@@ -61,19 +61,19 @@ def main() -> None:
     # 3.1 Configure browser tab title, icon, wide layout, and inject Forest Green CSS
     st.set_page_config(
         page_title="Online Shopping Purchase Intention & Session Segmentation",
-        page_icon="🛒",
+        page_icon=":material/shopping_bag:",
         layout="wide",
         initial_sidebar_state="auto",
     )
     ui.inject_css()
 
-    # 3.2 Register the 6 required application pages
-    pg_dashboard = st.Page(_page_dashboard, title="1. Dashboard", icon="📊", url_path="dashboard", default=True)
-    pg_eda = st.Page(_page_dataset_eda, title="2. Dataset Explorer & EDA", icon="🔍", url_path="dataset_eda")
-    pg_prep = st.Page(_page_preprocessing, title="3. Data Preprocessing", icon="🧹", url_path="preprocessing")
-    pg_pred = st.Page(_page_purchase_prediction, title="4. Purchase Prediction", icon="🎯", url_path="purchase_prediction")
-    pg_seg = st.Page(_page_session_segmentation, title="5. Session Segmentation", icon="🧩", url_path="session_segmentation")
-    pg_about = st.Page(_page_about, title="6. About Project", icon="ℹ️", url_path="about")
+    # 3.2 Register the 6 required application pages with Material UI vector icons
+    pg_dashboard = st.Page(_page_dashboard, title="Dashboard", icon=":material/space_dashboard:", url_path="dashboard", default=True)
+    pg_eda = st.Page(_page_dataset_eda, title="Dataset Explorer & EDA", icon=":material/query_stats:", url_path="dataset_eda")
+    pg_prep = st.Page(_page_preprocessing, title="Data Preprocessing", icon=":material/tune:", url_path="preprocessing")
+    pg_pred = st.Page(_page_purchase_prediction, title="Purchase Prediction", icon=":material/online_prediction:", url_path="purchase_prediction")
+    pg_seg = st.Page(_page_session_segmentation, title="Session Segmentation", icon=":material/hub:", url_path="session_segmentation")
+    pg_about = st.Page(_page_about, title="About Project", icon=":material/menu_book:", url_path="about")
 
     nav = st.navigation(
         {

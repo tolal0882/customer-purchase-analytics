@@ -182,20 +182,22 @@ with ui.chart_card("Preview & Export Processed Datasets", "Save cleaned data to 
     st.dataframe(df_cleaned.head(15), use_container_width=True, hide_index=True)
     e1, e2, e3 = st.columns(3)
     e1.download_button(
-        f"⬇️ Download Cleaned Dataset ({len(df_cleaned):,} rows CSV)",
+        f"Download Cleaned Dataset ({len(df_cleaned):,} rows CSV)",
         df_cleaned.to_csv(index=False).encode("utf-8"),
         file_name="online_shoppers_cleaned.csv",
         mime="text/csv",
+        icon=":material/download:",
         use_container_width=True,
     )
     clu_only_df = df_cleaned[data_validation.DEFAULT_CLUSTERING_FEATURES].copy()
     e2.download_button(
-        f"⬇️ Download Clustering Feature Matrix ({len(clu_only_df):,} × {len(clu_only_df.columns)} CSV)",
+        f"Download Clustering Feature Matrix ({len(clu_only_df):,} × {len(clu_only_df.columns)} CSV)",
         clu_only_df.to_csv(index=False).encode("utf-8"),
         file_name="online_shoppers_clustering_features.csv",
         mime="text/csv",
+        icon=":material/download:",
         use_container_width=True,
     )
-    if e3.button("💾 Save Processed CSV to data/processed/", type="primary", use_container_width=True):
+    if e3.button("Save Processed CSV to data/processed/", icon=":material/save:", type="primary", use_container_width=True):
         saved_path = preprocessing.save_processed_csv(df_cleaned, "online_shoppers_processed.csv")
         st.success(f"Saved processed dataset ({len(df_cleaned):,} rows) to `{saved_path}`.")

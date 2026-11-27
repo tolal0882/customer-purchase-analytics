@@ -49,10 +49,10 @@ ui.page_header(
 )
 
 tab_train, tab_pv, tab_pred, tab_hist = st.tabs([
-    "🧠 1. Model Training, Comparison & Evaluation",
-    "🔬 2. PageValues Investigation (17 vs. 16 Features)",
-    "🎯 3. Interactive Purchase Prediction",
-    "📜 4. Local Prediction History",
+    ":material/model_training: 1. Model Training, Comparison & Evaluation",
+    ":material/science: 2. PageValues Investigation (17 vs. 16 Features)",
+    ":material/online_prediction: 3. Interactive Purchase Prediction",
+    ":material/history: 4. Local Prediction History",
 ])
 
 # =============================================================================
@@ -85,7 +85,7 @@ with tab_train:
             default=data_validation.INPUT_FEATURES,
         )
 
-        with st.expander("⚙️ Configure Algorithm Hyperparameters", expanded=False):
+        with st.expander("Configure Algorithm Hyperparameters", icon=":material/settings:", expanded=False):
             hp_col1, hp_col2, hp_col3 = st.columns(3)
             with hp_col1:
                 st.markdown("**Logistic Regression**")
@@ -109,7 +109,8 @@ with tab_train:
         }
 
         train_btn = st.button(
-            "🚀 Train, Cross-Validate & Save Selected Models",
+            "Train, Cross-Validate & Save Selected Models",
+            icon=":material/play_arrow:",
             type="primary",
             use_container_width=True,
             disabled=(len(sel_algos) == 0 or len(sel_features) == 0),
@@ -288,7 +289,7 @@ with tab_pv:
     ):
         pv_c1, pv_c2 = st.columns([2, 1])
         pv_algo = pv_c1.selectbox("Select Algorithm for PageValues Ablation Study", options=classification.ALGORITHMS, index=2)
-        run_pv_btn = pv_c2.button("🔬 Run PageValues Comparison", type="primary", use_container_width=True)
+        run_pv_btn = pv_c2.button("Run PageValues Comparison", icon=":material/compare_arrows:", type="primary", use_container_width=True)
 
     if run_pv_btn or "pv_study_result" not in st.session_state:
         with st.spinner(f"Training {pv_algo} with all 17 features vs. 16 features (excluding PageValues)..."):
@@ -493,7 +494,7 @@ with tab_pred:
                             )
                         )
 
-                pred_submitted = st.form_submit_button("🎯 Predict Session Purchase Intention", type="primary", use_container_width=True)
+                pred_submitted = st.form_submit_button("Predict Session Purchase Intention", icon=":material/bolt:", type="primary", use_container_width=True)
 
         if pred_submitted or "last_session_prediction" not in st.session_state:
             try:
@@ -541,7 +542,7 @@ with tab_pred:
                         fig_eff.update_layout(coloraxis_showscale=False)
                         st.plotly_chart(fig_eff, use_container_width=True)
 
-                with st.expander("📋 View Input Summary Sent to Pipeline"):
+                with st.expander("View Input Summary Sent to Pipeline", icon=":material/data_object:"):
                     st.json(pred_res["inputs"])
 
 # =============================================================================
@@ -573,13 +574,14 @@ with tab_hist:
 
         hb1, hb2 = st.columns(2)
         hb1.download_button(
-            f"⬇️ Export Prediction History ({len(hist_df):,} rows CSV)",
+            f"Export Prediction History ({len(hist_df):,} rows CSV)",
             hist_df.to_csv(index=False).encode("utf-8"),
             file_name="online_shoppers_prediction_history.csv",
             mime="text/csv",
+            icon=":material/download:",
             use_container_width=True,
         )
-        if hb2.button("🗑️ Clear Local Prediction History", use_container_width=True):
+        if hb2.button("Clear Local Prediction History", icon=":material/delete_outline:", use_container_width=True):
             prediction.clear_prediction_history()
             st.rerun()
 

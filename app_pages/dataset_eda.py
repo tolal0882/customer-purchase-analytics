@@ -35,8 +35,8 @@ ui.page_header(
 )
 
 main_tab_exp, main_tab_eda = st.tabs([
-    "🗂️ 1. Interactive Dataset Explorer",
-    "📊 2. Exploratory Data Analysis (A · B · C · D)",
+    ":material/table_view: 1. Interactive Dataset Explorer",
+    ":material/bar_chart: 2. Exploratory Data Analysis (A · B · C · D)",
 ])
 
 # =============================================================================
@@ -95,10 +95,11 @@ with main_tab_exp:
 
     dl_col.write("")
     dl_col.download_button(
-        f"⬇️ Export Filtered Dataset ({len(filtered):,} rows CSV)",
+        f"Export Filtered Dataset ({len(filtered):,} rows CSV)",
         filtered[cols_to_show].to_csv(index=False).encode("utf-8"),
         file_name="online_shoppers_filtered_export.csv",
         mime="text/csv",
+        icon=":material/download:",
         use_container_width=True,
     )
 
@@ -117,7 +118,7 @@ with main_tab_exp:
     with d2, ui.chart_card("Column Data Types, Missing Values & Unique Counts", "Full schema inspection across all 18 columns"):
         st.dataframe(pd.DataFrame(val_report["column_summary"]), use_container_width=True, hide_index=True)
 
-    with st.expander(f"🔎 Inspect Exact Duplicate Records ({val_report['n_duplicates']} duplicate rows detected in raw CSV)"):
+    with st.expander(f"Inspect Exact Duplicate Records ({val_report['n_duplicates']} duplicate rows detected in raw CSV)", icon=":material/content_copy:"):
         ui.note(
             "Per methodological rules, these <b>125 exact duplicate records</b> are never silently deleted from the raw file. "
             "You can inspect them below and configure explicit duplicate handling on <b>Page 3 (Data Preprocessing)</b>."

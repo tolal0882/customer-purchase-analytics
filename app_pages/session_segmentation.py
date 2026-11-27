@@ -77,7 +77,7 @@ with ui.chart_card(
         use_log1p = bool(c5.checkbox("log1p Skewed Features", value=True))
         drop_dups = bool(st.checkbox("Remove 125 Exact Duplicate Sessions Before Clustering", value=bool(st.session_state.get("prep_drop_duplicates", False))))
 
-        run_km_btn = st.form_submit_button("🧩 Run K-Means Session Segmentation", type="primary", use_container_width=True)
+        run_km_btn = st.form_submit_button("Run K-Means Session Segmentation", icon=":material/hub:", type="primary", use_container_width=True)
 
 if run_km_btn or "session_clustering_result" not in st.session_state:
     if len(sel_feats) < 2:
@@ -267,17 +267,19 @@ with ui.chart_card("Cluster Profile Table (Average Feature Values & Post-Cluster
 
     dl1, dl2 = st.columns(2)
     dl1.download_button(
-        "⬇️ Export Cluster Profile Summary Table (CSV)",
+        "Export Cluster Profile Summary Table (CSV)",
         profile_table_df.to_csv(index=False).encode("utf-8"),
         file_name="session_segment_profiles.csv",
         mime="text/csv",
+        icon=":material/download:",
         use_container_width=True,
     )
     assign_df: pd.DataFrame = seg_res["assignments_df"]
     dl2.download_button(
-        f"⬇️ Export All Session Cluster Assignments ({len(assign_df):,} rows CSV)",
+        f"Export All Session Cluster Assignments ({len(assign_df):,} rows CSV)",
         assign_df.to_csv(index=False).encode("utf-8"),
         file_name="online_shoppers_cluster_assignments.csv",
         mime="text/csv",
+        icon=":material/download:",
         use_container_width=True,
     )

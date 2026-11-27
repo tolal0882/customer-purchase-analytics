@@ -57,16 +57,20 @@ section[data-testid="stSidebar"] {{
 section[data-testid="stSidebar"] * {{ color: #ECF4EE; }}
 section[data-testid="stSidebar"] hr {{ border-color: rgba(255,255,255,0.15); }}
 
-/* Categorized Native Sidebar Navigation */
+/* Categorized Native Sidebar Navigation with Vector Brand Icon */
 section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::before {{
-    content: "🛒 Online Shoppers ML";
+    content: "Online Shoppers ML";
     display: block;
     font-weight: 700;
-    font-size: 1.12rem;
+    font-size: 1.08rem;
     color: #FFFFFF;
-    padding: 1rem 1rem 0.75rem;
-    margin-bottom: 0.4rem;
+    padding: 1.05rem 1rem 0.85rem 3.15rem;
+    margin: 0.25rem 0.5rem 0.5rem;
     border-bottom: 1px solid rgba(255,255,255,0.14);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23A7C957'/%3E%3Cpath d='M11 12V10a5 5 0 0 1 10 0v2h3a1 1 0 0 1 1 1v11a3 3 0 0 1-3 3H10a3 3 0 0 1-3-3V13a1 1 0 0 1 1-1h3zm2 0h6v-2a3 3 0 0 0-6 0v2z' fill='%23153E2D'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 0.55rem 0.75rem;
+    background-size: 30px 30px;
 }}
 section[data-testid="stSidebar"] [data-testid="stSidebarNavSeparator"],
 section[data-testid="stSidebar"] [data-testid="stSidebarNavItems"] > div > span {{
