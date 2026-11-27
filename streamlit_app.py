@@ -8,6 +8,7 @@ Run from the project root:
 """
 from __future__ import annotations
 
+import importlib
 import runpy
 import sys
 from pathlib import Path
@@ -22,7 +23,21 @@ ROOT_DIR = Path(__file__).resolve().parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from src import data_loader, model_manager, ui
+from src import (
+    classification,
+    clustering,
+    data_loader,
+    data_validation,
+    evaluation,
+    model_manager,
+    prediction,
+    preprocessing,
+    ui,
+)
+
+# Reload src/ modules on every rerun so local code edits update the UI immediately
+for _mod in (ui, data_validation, data_loader, preprocessing, evaluation, model_manager, classification, prediction, clustering):
+    importlib.reload(_mod)
 
 
 # =============================================================================

@@ -2,6 +2,7 @@
 headless = true
 maxUploadSize = 200
 fileWatcherType = "auto"
+runOnSave = true
 
 [theme]
 primaryColor = "#2F855A"
